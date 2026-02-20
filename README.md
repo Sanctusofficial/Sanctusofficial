@@ -28,9 +28,6 @@ Tools & Tech: C / C++ • Arduino • STM32 • ESP32 • Raspberry Pi • Pytho
 
 ---
 
-## Selected Projects
-(Replace these with your repo links and descriptions when ready. They are examples based on your focus areas.)
-
 ### Smart Solar Edge Node
 A compact IoT node that maximizes solar harvesting and provides remote telemetry for off-grid sensors.  
 Tech: STM32 · ESP32 · LoRa · MPPT · Python
