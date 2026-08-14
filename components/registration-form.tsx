@@ -30,6 +30,40 @@ type FormErrors = Partial<
   >
 >
 
+// Resizes and compresses a phone camera photo in-browser before upload,
+// so weak mobile connections don't stall on a 5-10MB original file.
+async function compressImage(file: File, maxWidth = 1200, quality = 0.7): Promise<File> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      img.src = e.target?.result as string
+    }
+    img.onload = () => {
+      const scale = Math.min(1, maxWidth / img.width)
+      const canvas = document.createElement('canvas')
+      canvas.width = img.width * scale
+      canvas.height = img.height * scale
+      const ctx = canvas.getContext('2d')
+      ctx?.drawImage(img, 0, 0, canvas.width, canvas.height)
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            reject(new Error('Compression failed.'))
+            return
+          }
+          resolve(new File([blob], file.name, { type: 'image/jpeg' }))
+        },
+        'image/jpeg',
+        quality,
+      )
+    }
+    img.onerror = reject
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+
 export function RegistrationForm() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [name, setName] = useState('')
@@ -80,11 +114,14 @@ export function RegistrationForm() {
         throw new Error('Please select a payment receipt image.')
       }
 
+      // Compress before upload so large phone camera photos don't stall on slow connections.
+      const fileToUpload = await compressImage(receiptFile).catch(() => receiptFile)
+
       // Upload execution with automatic fallback
       const uploadPromise = (async () => {
         try {
           // Attempt 1: Vercel Blob client upload
-          const blob = await upload(receiptFile.name, receiptFile, {
+          const blob = await upload(fileToUpload.name, fileToUpload, {
             access: 'public',
             handleUploadUrl: '/api/receipt-upload',
           })
@@ -92,7 +129,7 @@ export function RegistrationForm() {
         } catch {
           // Attempt 2: Fallback to direct FormData POST
           const formData = new FormData()
-          formData.append('file', receiptFile)
+          formData.append('file', fileToUpload)
           const res = await fetch('/api/receipt-upload', {
             method: 'POST',
             body: formData,
@@ -103,9 +140,9 @@ export function RegistrationForm() {
         }
       })()
 
-      // 15-second safety timeout to stop infinite spinning
+      // 30-second safety timeout to stop infinite spinning
       const timeoutPromise = new Promise<string>((_, reject) =>
-        setTimeout(() => reject(new Error('Upload timed out. Please try again.')), 15000)
+        setTimeout(() => reject(new Error('Upload timed out. Please try again.')), 30000)
       )
 
       const receiptUrl = await Promise.race([uploadPromise, timeoutPromise])
