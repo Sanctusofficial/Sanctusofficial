@@ -76,11 +76,45 @@ export function RegistrationForm() {
     setErrorMessage('')
 
     try {
-      const blob = await upload(receiptFile!.name, receiptFile!, {
-        access: 'public',
-        handleUploadUrl: '/api/receipt-upload',
-      })
+      if (!receiptFile) {
+        throw new Error('Please select a payment receipt image.')
+      }
 
+      // Upload execution with automatic fallback
+      const uploadPromise = (async () => {
+        try {
+          // Attempt 1: Vercel Blob client upload
+          const blob = await upload(receiptFile.name, receiptFile, {
+            access: 'public',
+            handleUploadUrl: '/api/receipt-upload',
+          })
+          return blob.url
+        } catch {
+          // Attempt 2: Fallback to direct FormData POST
+          const formData = new FormData()
+          formData.append('file', receiptFile)
+          const res = await fetch('/api/receipt-upload', {
+            method: 'POST',
+            body: formData,
+          })
+          const data = await res.json()
+          if (!res.ok) throw new Error(data.error || 'Failed to upload receipt.')
+          return data.url || data.receiptUrl || ''
+        }
+      })()
+
+      // 15-second safety timeout to stop infinite spinning
+      const timeoutPromise = new Promise<string>((_, reject) =>
+        setTimeout(() => reject(new Error('Upload timed out. Please try again.')), 15000)
+      )
+
+      const receiptUrl = await Promise.race([uploadPromise, timeoutPromise])
+
+      if (!receiptUrl) {
+        throw new Error('Could not retrieve image URL after upload.')
+      }
+
+      // Submit registration data to Google Sheets API route
       const res = await fetch('/api/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -89,7 +123,7 @@ export function RegistrationForm() {
           email,
           departments,
           matricNumber,
-          receiptUrl: blob.url,
+          receiptUrl,
           lookingForwardTo,
         }),
       })
@@ -101,6 +135,7 @@ export function RegistrationForm() {
 
       setStatus('success')
     } catch (err) {
+      console.error('Form submission error:', err)
       setStatus('error')
       setErrorMessage(err instanceof Error ? err.message : 'Something went wrong.')
     }
@@ -220,7 +255,7 @@ export function RegistrationForm() {
         </Field>
 
         {status === 'error' && (
-          <p role="alert" className="text-sm text-destructive">
+          <p role="alert" className="text-sm text-destructive font-medium">
             {errorMessage}
           </p>
         )}
