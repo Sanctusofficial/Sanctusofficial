@@ -5,7 +5,6 @@ import { RegistrationForm } from '@/components/registration-form'
 export default function Page() {
   return (
     <main className="min-h-screen bg-background">
-  <div className="scanlines" />
   <Hero />
       <EventDetails />
       <section className="px-6 pb-16">
