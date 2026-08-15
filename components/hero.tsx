@@ -1,5 +1,7 @@
 import Image from 'next/image'
-
+import { Countdown } from '@/components/countdown'
+// ...
+<Countdown />
 export function Hero() {
   return (
     <section className="relative isolate overflow-hidden bg-background">
