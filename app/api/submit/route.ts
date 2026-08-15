@@ -1,9 +1,16 @@
 import { NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
+import { Resend } from 'resend'
+
+const supabase = createClient(
+  process.env.SUPABASE_URL as string,
+  process.env.SUPABASE_SERVICE_ROLE_KEY as string,
+)
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(request: Request) {
   try {
     const data = await request.json()
-
     const { name, email, departments, matricNumber, receiptUrl, lookingForwardTo } = data
 
     if (
@@ -15,65 +22,42 @@ export async function POST(request: Request) {
       !receiptUrl ||
       !lookingForwardTo
     ) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 },
-      )
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    const submittedAt = new Date().toISOString()
-
-    console.log('[v0] New SEES\'30 MIXER registration:', {
+    const { error: dbError } = await supabase.from('registrations').insert({
       name,
       email,
-      departments,
-      matricNumber,
-      receiptUrl,
-      lookingForwardTo,
-      submittedAt,
+      departments: departments.join(', '),
+      matric_number: matricNumber,
+      receipt_url: receiptUrl,
+      looking_forward_to: lookingForwardTo,
     })
 
-    const webhookUrl = process.env.SHEETS_WEBHOOK_URL
-    const webhookSecret = process.env.SHEETS_SECRET
-
-    if (!webhookUrl || !webhookSecret) {
-      console.error('[v0] Missing SHEETS_WEBHOOK_URL or SHEETS_SECRET env var')
-      return NextResponse.json(
-        { error: 'Registration storage is not configured' },
-        { status: 500 },
-      )
+    if (dbError) {
+      console.error('[v0] Supabase insert error:', dbError)
+      return NextResponse.json({ error: 'Failed to save registration' }, { status: 502 })
     }
 
-    const sheetsResponse = await fetch(webhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        secret: webhookSecret,
-        name,
-        email,
-        departments: departments.join(', '),
-        matricNumber,
-        receiptUrl,
-        lookingForwardTo,
-        submittedAt,
-      }),
+    // Registration is already safely stored — an email hiccup shouldn't fail the whole request.
+    const { error: emailError } = await resend.emails.send({
+      from: "SEES'30 MIXER <onboarding@resend.dev>",
+      to: email,
+      subject: "You're in! SEES'30 MIXER",
+      html: `<p>Hey ${name},</p>
+<p>Your spot at <strong>SEES'30 MIXER</strong> is locked in ✅</p>
+<p>📅 29th August<br/>🕛 12PM</p>
+<p>Unwind after shege — pull up with your gang.</p>
+<p>See you there!<br/>SEES'30</p>`,
     })
 
-    if (!sheetsResponse.ok) {
-      const errorText = await sheetsResponse.text().catch(() => '')
-      console.error('[v0] Sheets webhook failed:', sheetsResponse.status, errorText)
-      return NextResponse.json(
-        { error: 'Failed to save registration' },
-        { status: 502 },
-      )
+    if (emailError) {
+      console.error('[v0] Resend email error:', emailError)
     }
 
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('[v0] Submit error:', error)
-    return NextResponse.json(
-      { error: 'Failed to submit registration' },
-      { status: 500 },
-    )
+    return NextResponse.json({ error: 'Failed to submit registration' }, { status: 500 })
   }
 }
