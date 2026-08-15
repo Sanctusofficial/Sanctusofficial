@@ -1,31 +1,37 @@
 import { createClient } from '@supabase/supabase-js'
+import { notFound } from 'next/navigation'
+
+// Forces this page to fetch fresh data on every visit instead of
+// being cached — this is what was causing the "not updating" issue.
+export const dynamic = 'force-dynamic'
 
 const supabase = createClient(
   process.env.SUPABASE_URL as string,
   process.env.SUPABASE_SERVICE_ROLE_KEY as string,
 )
 
-export default async function AdminPage() {
-  // TEMPORARY: secret-key check removed for debugging the 404.
-  // Put the check back once this loads successfully — see note below.
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ key?: string }>
+}) {
+  const params = await searchParams
 
-  const { data: registrations, error } = await supabase
+  if (!process.env.ADMIN_SECRET || params.key !== process.env.ADMIN_SECRET) {
+    notFound()
+  }
+
+  const { data: registrations } = await supabase
     .from('registrations')
     .select('*')
     .order('created_at', { ascending: false })
 
   return (
     <main className="min-h-screen bg-black text-white p-4">
-      <h1 className="text-xl font-bold mb-1">SEES'30 MIXER — Registrations (DEBUG MODE)</h1>
+      <h1 className="text-xl font-bold mb-1">SEES'30 MIXER — Registrations</h1>
       <p className="text-neutral-400 text-sm mb-4">
-        {registrations?.length ?? 0} registered
+        {registrations?.length ?? 0} registered · pull to refresh for latest
       </p>
-
-      {error && (
-        <p className="text-red-400 text-sm mb-4">
-          Supabase error: {error.message}
-        </p>
-      )}
 
       <div className="flex flex-col gap-3">
         {registrations?.map((r) => (
