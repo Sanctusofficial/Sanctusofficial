@@ -1,189 +1,238 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&display=swap');
 
-/* ---------- Base ---------- */
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
 :root {
-  --pink: #ff2fb2;
-  --green: #39ff82;
-  --bg-black: #0a0a0a;
+  color-scheme: light;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
 }
 
-body {
-  background-color: var(--bg-black);
-  color: #f5f5f5;
-  font-family: system-ui, sans-serif;
-  position: relative;
-  min-height: 100vh;
-  overflow-x: hidden;
+.dark {
+  color-scheme: dark;
+  --background: oklch(0.09 0.02 310);
+  --foreground: oklch(0.97 0.01 300);
+  --card: oklch(0.13 0.03 305);
+  --card-foreground: oklch(0.97 0.01 300);
+  --popover: oklch(0.13 0.03 305);
+  --popover-foreground: oklch(0.97 0.01 300);
+  --primary: oklch(0.73 0.24 355);
+  --primary-foreground: oklch(0.1 0.02 310);
+  --secondary: oklch(0.75 0.22 145);
+  --secondary-foreground: oklch(0.1 0.05 145);
+  --muted: oklch(0.19 0.03 305);
+  --muted-foreground: oklch(0.68 0.05 300);
+  --accent: oklch(0.75 0.22 145);
+  --accent-foreground: oklch(0.1 0.05 145);
+  --destructive: oklch(0.65 0.24 27);
+  --border: oklch(0.75 0.22 145 / 25%);
+  --input: oklch(1 0 0 / 12%);
+  --ring: oklch(0.73 0.24 355);
+  --chart-1: oklch(0.73 0.24 355);
+  --chart-2: oklch(0.75 0.22 145);
+  --chart-3: oklch(0.6 0.2 300);
+  --chart-4: oklch(0.7 0.2 200);
+  --chart-5: oklch(0.65 0.22 60);
+  --sidebar: oklch(0.13 0.03 305);
+  --sidebar-foreground: oklch(0.97 0.01 300);
+  --sidebar-primary: oklch(0.73 0.24 355);
+  --sidebar-primary-foreground: oklch(0.1 0.02 310);
+  --sidebar-accent: oklch(0.75 0.22 145);
+  --sidebar-accent-foreground: oklch(0.1 0.05 145);
+  --sidebar-border: oklch(0.75 0.22 145 / 25%);
+  --sidebar-ring: oklch(0.73 0.24 355);
 }
 
-h1, h2, .font-display {
-  font-family: 'Orbitron', system-ui, sans-serif;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }
 
-/* ---------- Animated gradient sky (behind everything) ---------- */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -3;
-  background: linear-gradient(135deg, #0a0a0a, #2a0a3a, #4a0a3a, #0a0a0a);
-  background-size: 400% 400%;
-  animation: gradientShift 18s ease infinite;
-}
+@layer utilities {
+  .text-glow-pink {
+    text-shadow:
+      0 0 8px oklch(0.73 0.24 355 / 70%),
+      0 0 24px oklch(0.73 0.24 355 / 40%);
+  }
+  .text-glow-green {
+    text-shadow:
+      0 0 8px oklch(0.75 0.22 145 / 70%),
+      0 0 24px oklch(0.75 0.22 145 / 40%);
+  }
+  .glitch-text {
+    position: relative;
+    display: inline-block;
+  }
+  .glitch-text::before,
+  .glitch-text::after {
+    content: attr(data-text);
+    position: absolute;
+    inset: 0;
+    opacity: 0.7;
+  }
+  .glitch-text::before {
+    color: oklch(0.73 0.24 355);
+    transform: translate(2px, 0);
+    mix-blend-mode: screen;
+    animation: glitch-shift-1 3.2s infinite steps(1);
+  }
+  .glitch-text::after {
+    color: oklch(0.75 0.22 145);
+    transform: translate(-2px, 0);
+    mix-blend-mode: screen;
+    animation: glitch-shift-2 2.6s infinite steps(1);
+  }
+  @keyframes glitch-shift-1 {
+    0%, 92% { transform: translate(2px, 0); opacity: 0.7; }
+    93% { transform: translate(-3px, 1px); opacity: 0.9; }
+    96% { transform: translate(3px, -1px); opacity: 0.5; }
+    100% { transform: translate(2px, 0); opacity: 0.7; }
+  }
+  @keyframes glitch-shift-2 {
+    0%, 90% { transform: translate(-2px, 0); opacity: 0.7; }
+    94% { transform: translate(3px, -1px); opacity: 0.9; }
+    97% { transform: translate(-3px, 1px); opacity: 0.5; }
+    100% { transform: translate(-2px, 0); opacity: 0.7; }
+  }
+  .scanlines::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 2px,
+      oklch(0 0 0 / 15%) 3px,
+      transparent 4px
+    );
+    mix-blend-mode: overlay;
+  }
 
-@keyframes gradientShift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
+  /* ---------- New additions below — nothing above this line was touched ---------- */
 
-/* ---------- Synthwave receding grid ---------- */
-body::after {
-  content: '';
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 50vh;
-  z-index: -2;
-  background-image:
-    linear-gradient(rgba(57, 255, 130, 0.25) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(57, 255, 130, 0.25) 1px, transparent 1px);
-  background-size: 60px 60px;
-  transform: perspective(300px) rotateX(60deg);
-  transform-origin: bottom;
-  mask-image: linear-gradient(to top, black, transparent);
-  pointer-events: none;
-}
+  /* Applies automatically to every text input / textarea, no className edits needed */
+  input:focus, textarea:focus {
+    outline: none;
+    box-shadow: 0 0 0 1px oklch(0.75 0.22 145 / 50%), 0 0 20px oklch(0.75 0.22 145 / 35%);
+    transition: box-shadow 0.2s ease;
+  }
 
-/* ---------- Scanline overlay ---------- */
-.scanlines {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  pointer-events: none;
-  background: repeating-linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0.03) 0px,
-    rgba(255, 255, 255, 0.03) 1px,
-    transparent 1px,
-    transparent 3px
-  );
-}
+  /* Applies automatically to every submit button, no className edits needed */
+  button[type='submit'] {
+    box-shadow: 0 0 20px oklch(0.73 0.24 355 / 50%), 0 0 40px oklch(0.73 0.24 355 / 20%);
+    transition: box-shadow 0.2s ease, transform 0.1s ease;
+  }
+  button[type='submit']:hover {
+    box-shadow: 0 0 30px oklch(0.73 0.24 355 / 80%), 0 0 60px oklch(0.73 0.24 355 / 35%);
+    transform: translateY(-1px);
+  }
 
-/* ---------- Glitch title ----------
-   Usage: <h1 class="glitch" data-text="SEES'30 MIXER">SEES'30 MIXER</h1> */
-.glitch {
-  position: relative;
-  display: inline-block;
-}
-
-.glitch::before,
-.glitch::after {
-  content: attr(data-text);
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.glitch::before {
-  color: var(--pink);
-  transform: translate(-2px, -1px);
-  animation: glitchShift 3s infinite linear alternate-reverse;
-  opacity: 0.7;
-}
-
-.glitch::after {
-  color: var(--green);
-  transform: translate(2px, 1px);
-  animation: glitchShift 2.4s infinite linear alternate-reverse;
-  opacity: 0.7;
-}
-
-@keyframes glitchShift {
-  0%   { clip-path: inset(0 0 85% 0); }
-  20%  { clip-path: inset(20% 0 60% 0); }
-  40%  { clip-path: inset(60% 0 10% 0); }
-  60%  { clip-path: inset(10% 0 70% 0); }
-  80%  { clip-path: inset(80% 0 5% 0); }
-  100% { clip-path: inset(40% 0 40% 0); }
-}
-
-/* ---------- Neon glow utilities ---------- */
-.text-glow-pink { text-shadow: 0 0 20px rgba(255, 47, 178, 0.6); }
-.text-glow-green { text-shadow: 0 0 20px rgba(57, 255, 130, 0.6); }
-
-.glow-border { box-shadow: 0 0 20px rgba(255, 47, 178, 0.35); }
-
-.glow-card {
-  box-shadow: 0 0 30px rgba(255, 47, 178, 0.15), 0 0 60px rgba(57, 255, 130, 0.08);
-}
-
-/* Applies automatically to every text input / textarea, no className edits needed */
-input:focus, textarea:focus {
-  outline: none;
-  border-color: var(--green) !important;
-  box-shadow: 0 0 0 1px rgba(57, 255, 130, 0.4), 0 0 20px rgba(57, 255, 130, 0.35);
-  transition: box-shadow 0.2s ease;
-}
-
-/* Applies automatically to every submit button, no className edits needed */
-button[type='submit'] {
-  box-shadow: 0 0 20px rgba(255, 47, 178, 0.5), 0 0 40px rgba(255, 47, 178, 0.2);
-  transition: box-shadow 0.2s ease, transform 0.1s ease;
-}
-button[type='submit']:hover {
-  box-shadow: 0 0 30px rgba(255, 47, 178, 0.8), 0 0 60px rgba(255, 47, 178, 0.35);
-  transform: translateY(-1px);
-}
-
-/* ---------- Floating UFO beam accent ----------
-   Usage: <div class="ufo-beam" /> placed near the hero title */
-.ufo-beam {
-  width: 4px;
-  height: 120px;
-  margin: 0 auto;
-  background: linear-gradient(to bottom, rgba(57, 255, 130, 0.9), transparent);
-  clip-path: polygon(45% 0, 55% 0, 100% 100%, 0 100%);
-  animation: beamFloat 3s ease-in-out infinite;
-  filter: blur(1px);
-}
-
-@keyframes beamFloat {
-  0%, 100% { transform: translateY(0); opacity: 0.8; }
-  50% { transform: translateY(6px); opacity: 1; }
-}
-
-/* ---------- Countdown ---------- */
-.countdown {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-  margin: 16px 0;
-}
-
-.countdown-unit {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(57, 255, 130, 0.3);
-  border-radius: 10px;
-  padding: 10px 14px;
-  min-width: 60px;
-  text-align: center;
-}
-
-.countdown-unit .value {
-  font-family: 'Orbitron', system-ui, sans-serif;
-  font-size: 1.5rem;
-  color: var(--green);
-  text-shadow: 0 0 12px rgba(57, 255, 130, 0.6);
-}
-
-.countdown-unit .label {
-  font-size: 0.65rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: #999;
+  .countdown {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin: 16px 0;
+  }
+  .countdown-unit {
+    background: oklch(1 0 0 / 4%);
+    border: 1px solid oklch(0.75 0.22 145 / 30%);
+    border-radius: 10px;
+    padding: 10px 14px;
+    min-width: 60px;
+    text-align: center;
+  }
+  .countdown-unit .value {
+    font-family: 'Orbitron', ui-sans-serif, system-ui, sans-serif;
+    font-size: 1.5rem;
+    color: oklch(0.75 0.22 145);
+    text-shadow: 0 0 12px oklch(0.75 0.22 145 / 60%);
+  }
+  .countdown-unit .label {
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: oklch(0.68 0.05 300);
+  }
 }
 
