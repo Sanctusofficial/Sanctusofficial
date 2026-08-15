@@ -1,7 +1,6 @@
 import Image from 'next/image'
 import { Countdown } from '@/components/countdown'
-// ...
-<Countdown />
+
 export function Hero() {
   return (
     <section className="relative isolate overflow-hidden bg-background">
@@ -16,6 +15,7 @@ export function Hero() {
         />
         <div aria-hidden="true" className="scanlines absolute inset-0" />
       </div>
+      <Countdown />
       <div
         aria-hidden="true"
         className="h-6 bg-gradient-to-b from-transparent to-background"
