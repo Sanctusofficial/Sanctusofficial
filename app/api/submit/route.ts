@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { Resend } from 'resend'
 
 const supabase = createClient(
   process.env.SUPABASE_URL as string,
   process.env.SUPABASE_SERVICE_ROLE_KEY as string,
 )
-const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(request: Request) {
   try {
@@ -25,6 +23,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
+    // Check first, so the person gets a clear message instead of a raw database error.
+    const { data: existing } = await supabase
+      .from('registrations')
+      .select('id')
+      .or(`email.eq.${email},matric_number.eq.${matricNumber}`)
+      .maybeSingle()
+
+    if (existing) {
+      return NextResponse.json(
+        { error: "You've already registered for SEES'30 MIXER — one spot per person!" },
+        { status: 409 },
+      )
+    }
+
     const { error: dbError } = await supabase.from('registrations').insert({
       name,
       email,
@@ -35,24 +47,16 @@ export async function POST(request: Request) {
     })
 
     if (dbError) {
+      // Backup check: catches the rare case of two identical submissions
+      // landing at the exact same moment, before the check above could catch it.
+      if (dbError.code === '23505') {
+        return NextResponse.json(
+          { error: "You've already registered for SEES'30 MIXER — one spot per person!" },
+          { status: 409 },
+        )
+      }
       console.error('[v0] Supabase insert error:', dbError)
       return NextResponse.json({ error: 'Failed to save registration' }, { status: 502 })
-    }
-
-    // Registration is already safely stored — an email hiccup shouldn't fail the whole request.
-    const { error: emailError } = await resend.emails.send({
-      from: "SEES'30 MIXER <onboarding@resend.dev>",
-      to: email,
-      subject: "You're in! SEES'30 MIXER",
-      html: `<p>Hey ${name},</p>
-<p>Your spot at <strong>SEES'30 MIXER</strong> is locked in ✅</p>
-<p>📅 29th August<br/>🕛 12PM</p>
-<p>Unwind after shege — pull up with your gang.</p>
-<p>See you there!<br/>SEES'30</p>`,
-    })
-
-    if (emailError) {
-      console.error('[v0] Resend email error:', emailError)
     }
 
     return NextResponse.json({ success: true })
