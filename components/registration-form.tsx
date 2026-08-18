@@ -187,7 +187,7 @@ export function RegistrationForm() {
         <CheckCircle2 className="size-12 text-secondary text-glow-green" aria-hidden="true" />
         <h2 className="font-display text-2xl text-primary text-glow-pink">You&apos;re in!</h2>
         <p className="text-muted-foreground">
-          Your spot at SEES&apos;30 MIXER is locked. See you 29th August, 12PM &mdash; pull up
+          Your spot at SEES&apos;30 MIXER is locked. See you 31st August, 12PM &mdash; pull up
           with your gang.
         </p>
       </div>
