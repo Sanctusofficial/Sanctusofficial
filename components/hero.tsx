@@ -7,7 +7,7 @@ export function Hero() {
       <div className="relative mx-auto aspect-[4/5] w-full max-w-xl">
         <Image
           src="/images/hero-banner.jpg"
-          alt="SEES'30 MIXER poster: a UFO beaming green light onto the glitchy SEES'30 MIXER title, set against neon pink vaporwave graphics. Tags read Fun & Games, Unwind After Shege, Pull Up W Your Gang, and Pure Vibes. Event details: 29th August, 12PM. Featuring picnic, outdoor games, good music, and meet & greet."
+          alt="SEES'30 MIXER poster: a UFO beaming green light onto the glitchy SEES'30 MIXER title, set against neon pink vaporwave graphics. Tags read Fun & Games, Unwind After Shege, Pull Up W Your Gang, and Pure Vibes. Event details: 31st August, 12PM. Featuring picnic, outdoor games, good music, and meet & greet."
           fill
           priority
           className="object-cover"
