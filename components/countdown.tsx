@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 
 // EDIT THIS if your event date/time changes
-const EVENT_DATE = new Date('2026-08-29T12:00:00+01:00')
+const EVENT_DATE = new Date('2026-08-31T12:00:00+01:00')
 
 function getTimeLeft() {
   const diff = Math.max(0, EVENT_DATE.getTime() - Date.now())
@@ -48,4 +48,3 @@ export function Countdown() {
     </div>
   )
 }
-
