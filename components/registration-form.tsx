@@ -64,7 +64,7 @@ async function compressImage(file: File, maxWidth = 1200, quality = 0.7): Promis
   })
 }
 
-export function RegistrationForm() {
+export function RegistrationForm({ eventSlug }: { eventSlug: string }) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -156,6 +156,7 @@ export function RegistrationForm() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          eventSlug,
           name,
           email,
           departments,
@@ -187,8 +188,7 @@ export function RegistrationForm() {
         <CheckCircle2 className="size-12 text-secondary text-glow-green" aria-hidden="true" />
         <h2 className="font-display text-2xl text-primary text-glow-pink">You&apos;re in!</h2>
         <p className="text-muted-foreground">
-          Your spot at SEES&apos;30 MIXER is locked. See you 31st August, 12PM &mdash; pull up
-          with your gang.
+          Your spot is locked. See you there.
         </p>
       </div>
     )

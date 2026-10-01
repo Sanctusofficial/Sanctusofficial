@@ -16,9 +16,8 @@ const spaceGrotesk = Space_Grotesk({
 })
 
 export const metadata: Metadata = {
-  title: "SEES'30 MIXER",
-  description:
-    "SEES'30 MIXER — unwind after shege. Picnic, outdoor games, good music, and meet & greet on 29th August at 12PM.",
+  title: { default: "SEES'30 Events", template: "%s | SEES'30" },
+  description: "Events by the SEES'30 class. See what's coming up and register.",
   generator: 'v0.app',
   icons: {
     icon: [

@@ -2,12 +2,10 @@
 
 import { useEffect, useState } from 'react'
 
-// EDIT THIS if your event date/time changes
-const EVENT_DATE = new Date('2026-08-31T12:00:00+01:00')
-
-function getTimeLeft() {
-  const diff = Math.max(0, EVENT_DATE.getTime() - Date.now())
+function getTimeLeft(eventDate: Date) {
+  const diff = Math.max(0, eventDate.getTime() - Date.now())
   return {
+    over: diff === 0,
     days: Math.floor(diff / (1000 * 60 * 60 * 24)),
     hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
     minutes: Math.floor((diff / (1000 * 60)) % 60),
@@ -15,17 +13,18 @@ function getTimeLeft() {
   }
 }
 
-export function Countdown() {
+export function Countdown({ startsAt }: { startsAt: string }) {
   const [timeLeft, setTimeLeft] = useState<ReturnType<typeof getTimeLeft> | null>(null)
 
   useEffect(() => {
-    setTimeLeft(getTimeLeft())
-    const interval = setInterval(() => setTimeLeft(getTimeLeft()), 1000)
+    const eventDate = new Date(startsAt)
+    setTimeLeft(getTimeLeft(eventDate))
+    const interval = setInterval(() => setTimeLeft(getTimeLeft(eventDate)), 1000)
     return () => clearInterval(interval)
-  }, [])
+  }, [startsAt])
 
-  // Avoids a server/client mismatch on first render
-  if (!timeLeft) return null
+  // Avoids a server/client mismatch on first render; hides itself once the event has started
+  if (!timeLeft || timeLeft.over) return null
 
   return (
     <div className="countdown">

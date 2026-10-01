@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getEvent, hasEnded } from '@/lib/events'
 
 const supabase = createClient(
   process.env.SUPABASE_URL as string,
@@ -9,7 +10,12 @@ const supabase = createClient(
 export async function POST(request: Request) {
   try {
     const data = await request.json()
-    const { name, email, departments, matricNumber, receiptUrl, lookingForwardTo } = data
+    const { eventSlug, name, email, departments, matricNumber, receiptUrl, lookingForwardTo } = data
+
+    const event = getEvent(String(eventSlug))
+    if (!event || hasEnded(event)) {
+      return NextResponse.json({ error: 'Registration for this event is closed' }, { status: 400 })
+    }
 
     if (
       !name ||
