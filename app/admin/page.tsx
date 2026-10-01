@@ -5,10 +5,13 @@ import { notFound } from 'next/navigation'
 // being cached — this is what was causing the "not updating" issue.
 export const dynamic = 'force-dynamic'
 
-const supabase = createClient(
-  process.env.SUPABASE_URL as string,
-  process.env.SUPABASE_SERVICE_ROLE_KEY as string,
-)
+// Created when needed, not when the file loads, so a build without secrets doesn't crash.
+function getSupabase() {
+  return createClient(
+    process.env.SUPABASE_URL as string,
+    process.env.SUPABASE_SERVICE_ROLE_KEY as string,
+  )
+}
 
 export default async function AdminPage({
   searchParams,
@@ -21,6 +24,7 @@ export default async function AdminPage({
     notFound()
   }
 
+  const supabase = getSupabase()
   const { data: registrations } = await supabase
     .from('registrations')
     .select('*')

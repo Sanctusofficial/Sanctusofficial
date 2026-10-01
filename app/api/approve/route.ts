@@ -1,14 +1,18 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { resend, FROM_EMAIL, approvalEmailHtml } from '@/lib/resend'
+import { getResend, FROM_EMAIL, approvalEmailHtml } from '@/lib/resend'
 
-const supabase = createClient(
-  process.env.SUPABASE_URL as string,
-  process.env.SUPABASE_SERVICE_ROLE_KEY as string,
-)
+// Created when needed, not when the file loads, so a build without secrets doesn't crash.
+function getSupabase() {
+  return createClient(
+    process.env.SUPABASE_URL as string,
+    process.env.SUPABASE_SERVICE_ROLE_KEY as string,
+  )
+}
 
 export async function POST(request: Request) {
   try {
+    const supabase = getSupabase()
     const { id } = await request.json()
     if (!id) {
       return NextResponse.json({ error: 'Missing id' }, { status: 400 })
@@ -37,7 +41,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to update status' }, { status: 502 })
     }
 
-    await resend.emails.send({
+    await getResend().emails.send({
       from: FROM_EMAIL,
       to: registrant.email,
       subject: "You're confirmed — SEES'30 MIXER",

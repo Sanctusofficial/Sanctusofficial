@@ -2,13 +2,17 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getEvent, hasEnded } from '@/lib/events'
 
-const supabase = createClient(
-  process.env.SUPABASE_URL as string,
-  process.env.SUPABASE_SERVICE_ROLE_KEY as string,
-)
+// Created when needed, not when the file loads, so a build without secrets doesn't crash.
+function getSupabase() {
+  return createClient(
+    process.env.SUPABASE_URL as string,
+    process.env.SUPABASE_SERVICE_ROLE_KEY as string,
+  )
+}
 
 export async function POST(request: Request) {
   try {
+    const supabase = getSupabase()
     const data = await request.json()
     const { eventSlug, name, email, departments, matricNumber, receiptUrl, lookingForwardTo } = data
 

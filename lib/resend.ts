@@ -1,6 +1,11 @@
 import { Resend } from 'resend'
 
-export const resend = new Resend(process.env.RESEND_API_KEY)
+// Created when needed, not when the file loads, so a build without the key doesn't crash.
+let client: Resend | null = null
+export function getResend() {
+  if (!client) client = new Resend(process.env.RESEND_API_KEY)
+  return client
+}
 
 export const FROM_EMAIL = "SEES'30 MIXER <onboarding@resend.dev>"
 // ⚠️ Once you verify your own domain on Resend, change this to
