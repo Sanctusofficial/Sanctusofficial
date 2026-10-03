@@ -4,10 +4,7 @@ import { Calendar, MapPin } from 'lucide-react'
 import { EventDetails } from '@/components/event-details'
 import { Hero } from '@/components/hero'
 import { RegistrationForm } from '@/components/registration-form'
-import { formatWhen, getEvent, hasEnded } from '@/lib/events'
-
-// Checked on every visit, so "ended" flips on its own when the start time passes.
-export const dynamic = 'force-dynamic'
+import { formatWhen, getEvent } from '@/lib/events'
 
 type Props = { params: Promise<{ slug: string }> }
 
@@ -20,7 +17,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function EventPage({ params }: Props) {
   const event = getEvent((await params).slug)
   if (!event) notFound()
-  const ended = hasEnded(event)
 
   return (
     <main className="min-h-screen bg-background">
@@ -39,8 +35,8 @@ export default async function EventPage({ params }: Props) {
       </section>
       <EventDetails features={event.features} />
       <section className="px-6 pb-16">
-        {ended ? (
-          <p className="text-center font-display text-xl text-muted-foreground">This event has ended.</p>
+        {!event.registrationOpen ? (
+          <p className="text-center font-display text-xl text-muted-foreground">Registration is closed.</p>
         ) : (
           <>
             <h2 className="mb-6 text-center font-display text-2xl text-primary text-glow-pink">Register Now</h2>

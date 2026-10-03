@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { getEvent, hasEnded } from '@/lib/events'
+import { getEvent } from '@/lib/events'
 
 // Created when needed, not when the file loads, so a build without secrets doesn't crash.
 function getSupabase() {
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     const { eventSlug, name, email, departments, matricNumber, receiptUrl, lookingForwardTo } = data
 
     const event = getEvent(String(eventSlug))
-    if (!event || hasEnded(event)) {
+    if (!event || !event.registrationOpen) {
       return NextResponse.json({ error: 'Registration for this event is closed' }, { status: 400 })
     }
 
