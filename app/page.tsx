@@ -1,9 +1,9 @@
 import Link from 'next/link'
-import { EVENTS, formatWhen } from '@/lib/events'
+import { EVENTS, formatWhen, startTime } from '@/lib/events'
 
 export default function Page() {
   const sorted = [...EVENTS].sort(
-    (a, b) => Number(!a.registrationOpen) - Number(!b.registrationOpen) || +new Date(a.startsAt) - +new Date(b.startsAt),
+    (a, b) => Number(!a.registrationOpen) - Number(!b.registrationOpen) || startTime(a) - startTime(b),
   )
   return (
     <main className="mx-auto min-h-screen max-w-md px-6 py-12">
