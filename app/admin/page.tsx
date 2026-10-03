@@ -43,6 +43,7 @@ export default async function AdminPage({
             <div className="font-semibold">{r.name}</div>
             <div className="text-neutral-400">{r.email}</div>
             <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-neutral-300">
+              <span>Event: {r.event_slug}</span>
               <span>Dept: {r.departments}</span>
               <span>Matric: {r.matric_number}</span>
             </div>

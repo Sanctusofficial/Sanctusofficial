@@ -34,20 +34,19 @@ export async function POST(request: Request) {
     }
 
     // Check first, so the person gets a clear message instead of a raw database error.
-    const { data: existing } = await supabase
-      .from('registrations')
-      .select('id')
-      .or(`email.eq.${email},matric_number.eq.${matricNumber}`)
-      .maybeSingle()
+    // One spot per person *per event*: the same email or matric number can register for a different event.
+    const [byEmail, byMatric] = await Promise.all([
+      supabase.from('registrations').select('id').eq('event_slug', event.slug).eq('email', email).maybeSingle(),
+      supabase.from('registrations').select('id').eq('event_slug', event.slug).eq('matric_number', matricNumber).maybeSingle(),
+    ])
+    const duplicateMessage = `You've already registered for ${event.title} — one spot per person!`
 
-    if (existing) {
-      return NextResponse.json(
-        { error: "You've already registered for SEES'30 MIXER — one spot per person!" },
-        { status: 409 },
-      )
+    if (byEmail.data || byMatric.data) {
+      return NextResponse.json({ error: duplicateMessage }, { status: 409 })
     }
 
     const { error: dbError } = await supabase.from('registrations').insert({
+      event_slug: event.slug,
       name,
       email,
       departments: departments.join(', '),
@@ -60,10 +59,7 @@ export async function POST(request: Request) {
       // Backup check: catches the rare case of two identical submissions
       // landing at the exact same moment, before the check above could catch it.
       if (dbError.code === '23505') {
-        return NextResponse.json(
-          { error: "You've already registered for SEES'30 MIXER — one spot per person!" },
-          { status: 409 },
-        )
+        return NextResponse.json({ error: duplicateMessage }, { status: 409 })
       }
       console.error('[v0] Supabase insert error:', dbError)
       return NextResponse.json({ error: 'Failed to save registration' }, { status: 502 })
