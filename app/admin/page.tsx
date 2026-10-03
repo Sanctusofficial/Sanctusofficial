@@ -28,6 +28,7 @@ export default async function AdminPage({
   const { data: registrations } = await supabase
     .from('registrations')
     .select('*')
+    .neq('status', 'awaiting_payment')
     .order('created_at', { ascending: false })
 
   return (
@@ -44,18 +45,18 @@ export default async function AdminPage({
             <div className="text-neutral-400">{r.email}</div>
             <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-neutral-300">
               <span>Event: {r.event_slug}</span>
+              <span>Status: {r.status}</span>
               <span>Dept: {r.departments}</span>
               <span>Matric: {r.matric_number}</span>
             </div>
             <div className="mt-1">
-              <a
-                href={r.receipt_url}
-                target="_blank"
-                rel="noreferrer"
-                className="text-pink-400 underline"
-              >
-                View receipt
-              </a>
+              {r.receipt_url ? (
+                <a href={r.receipt_url} target="_blank" rel="noreferrer" className="text-pink-400 underline">
+                  View receipt
+                </a>
+              ) : r.paid_at ? (
+                <span className="text-green-400">Paid online · ₦{((r.amount_kobo ?? 0) / 100).toLocaleString()}</span>
+              ) : null}
             </div>
             <div className="mt-1 italic text-neutral-400">"{r.looking_forward_to}"</div>
             <div className="mt-1 text-xs text-neutral-500">
