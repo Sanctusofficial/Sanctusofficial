@@ -1,11 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { upload } from '@vercel/blob/client'
+import { CheckCircle2, Upload } from 'lucide-react'
+import { useRef, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
   Field,
+  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
@@ -22,19 +25,57 @@ const DEPARTMENTS = [
 
 type FormErrors = Partial<
   Record<
-    'name' | 'email' | 'departments' | 'matricNumber' | 'lookingForwardTo',
+    'name' | 'email' | 'departments' | 'matricNumber' | 'receipt' | 'lookingForwardTo',
     string
   >
 >
 
-export function RegistrationForm({ eventSlug, priceNaira }: { eventSlug: string; priceNaira: number }) {
+// Resizes and compresses a phone camera photo in-browser before upload,
+// so weak mobile connections don't stall on a 5-10MB original file.
+async function compressImage(file: File, maxWidth = 1200, quality = 0.7): Promise<File> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      img.src = e.target?.result as string
+    }
+    img.onload = () => {
+      const scale = Math.min(1, maxWidth / img.width)
+      const canvas = document.createElement('canvas')
+      canvas.width = img.width * scale
+      canvas.height = img.height * scale
+      const ctx = canvas.getContext('2d')
+      ctx?.drawImage(img, 0, 0, canvas.width, canvas.height)
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            reject(new Error('Compression failed.'))
+            return
+          }
+          resolve(new File([blob], file.name, { type: 'image/jpeg' }))
+        },
+        'image/jpeg',
+        quality,
+      )
+    }
+    img.onerror = reject
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+
+export function RegistrationForm({ eventSlug }: { eventSlug: string }) {
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [departments, setDepartments] = useState<string[]>([])
   const [matricNumber, setMatricNumber] = useState('')
+  const [receiptFile, setReceiptFile] = useState<File | null>(null)
   const [lookingForwardTo, setLookingForwardTo] = useState('')
   const [errors, setErrors] = useState<FormErrors>({})
-  const [status, setStatus] = useState<'idle' | 'submitting' | 'error'>('idle')
+  const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>(
+    'idle',
+  )
   const [errorMessage, setErrorMessage] = useState('')
 
   function toggleDepartment(id: string, checked: boolean) {
@@ -53,6 +94,7 @@ export function RegistrationForm({ eventSlug, priceNaira }: { eventSlug: string;
     }
     if (departments.length === 0) next.departments = 'Select at least one department.'
     if (!matricNumber.trim()) next.matricNumber = 'Matric number is required.'
+    if (!receiptFile) next.receipt = 'Upload your payment receipt.'
     if (!lookingForwardTo.trim())
       next.lookingForwardTo = 'Tell us what you\u2019re looking forward to.'
     return next
@@ -68,22 +110,88 @@ export function RegistrationForm({ eventSlug, priceNaira }: { eventSlug: string;
     setErrorMessage('')
 
     try {
+      if (!receiptFile) {
+        throw new Error('Please select a payment receipt image.')
+      }
+
+      // Compress before upload so large phone camera photos don't stall on slow connections.
+      const fileToUpload = await compressImage(receiptFile).catch(() => receiptFile)
+
+      // Upload execution with automatic fallback
+      const uploadPromise = (async () => {
+        try {
+          // Attempt 1: Vercel Blob client upload
+          const blob = await upload(fileToUpload.name, fileToUpload, {
+            access: 'public',
+            handleUploadUrl: '/api/receipt-upload',
+          })
+          return blob.url
+        } catch {
+          // Attempt 2: Fallback to direct FormData POST
+          const formData = new FormData()
+          formData.append('file', fileToUpload)
+          const res = await fetch('/api/receipt-upload', {
+            method: 'POST',
+            body: formData,
+          })
+          const data = await res.json()
+          if (!res.ok) throw new Error(data.error || 'Failed to upload receipt.')
+          return data.url || data.receiptUrl || ''
+        }
+      })()
+
+      // 30-second safety timeout to stop infinite spinning
+      const timeoutPromise = new Promise<string>((_, reject) =>
+        setTimeout(() => reject(new Error('Upload timed out. Please try again.')), 30000)
+      )
+
+      const receiptUrl = await Promise.race([uploadPromise, timeoutPromise])
+
+      if (!receiptUrl) {
+        throw new Error('Could not retrieve image URL after upload.')
+      }
+
+      // Submit registration data to Google Sheets API route
       const res = await fetch('/api/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ eventSlug, name, email, departments, matricNumber, lookingForwardTo }),
+        body: JSON.stringify({
+          eventSlug,
+          name,
+          email,
+          departments,
+          matricNumber,
+          receiptUrl,
+          lookingForwardTo,
+        }),
       })
-      const body = await res.json().catch(() => ({}))
-      if (!res.ok || !body.url) {
-        throw new Error(body.error ?? 'Could not start payment. Try again.')
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(body.error ?? 'Submission failed. Try again.')
       }
-      // Hand over to Paystack's secure payment page. Staying in 'submitting' keeps the button locked meanwhile.
-      window.location.href = body.url
+
+      setStatus('success')
     } catch (err) {
       console.error('Form submission error:', err)
       setStatus('error')
       setErrorMessage(err instanceof Error ? err.message : 'Something went wrong.')
     }
+  }
+
+  if (status === 'success') {
+    return (
+      <div
+        role="status"
+        className="mx-auto flex max-w-md flex-col items-center gap-4 rounded-2xl border border-secondary/30 bg-card px-6 py-12 text-center"
+      >
+        <CheckCircle2 className="size-12 text-secondary text-glow-green" aria-hidden="true" />
+        <h2 className="font-display text-2xl text-primary text-glow-pink">You&apos;re in!</h2>
+        <p className="text-muted-foreground">
+          Your spot is locked. See you there.
+        </p>
+      </div>
+    )
   }
 
   return (
@@ -148,6 +256,29 @@ export function RegistrationForm({ eventSlug, priceNaira }: { eventSlug: string;
           <FieldError>{errors.matricNumber}</FieldError>
         </Field>
 
+        <Field data-invalid={!!errors.receipt}>
+          <FieldLabel htmlFor="receipt">Payment Receipt</FieldLabel>
+          <input
+            ref={fileInputRef}
+            id="receipt"
+            type="file"
+            accept="image/*"
+            className="sr-only"
+            onChange={(e) => setReceiptFile(e.target.files?.[0] ?? null)}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full justify-start border-secondary/40 text-foreground hover:bg-secondary/10"
+          >
+            <Upload data-icon="inline-start" />
+            {receiptFile ? receiptFile.name : 'Upload receipt image'}
+          </Button>
+          <FieldDescription>Screenshot or photo of your payment receipt.</FieldDescription>
+          <FieldError>{errors.receipt}</FieldError>
+        </Field>
+
         <Field data-invalid={!!errors.lookingForwardTo}>
           <FieldLabel htmlFor="looking-forward">What are you looking forward to?</FieldLabel>
           <Input
@@ -172,7 +303,7 @@ export function RegistrationForm({ eventSlug, priceNaira }: { eventSlug: string;
           className="w-full bg-primary text-primary-foreground shadow-[0_0_20px_oklch(0.73_0.24_355_/_50%)] hover:bg-primary/90"
         >
           {status === 'submitting' && <Spinner />}
-          {status === 'submitting' ? 'Taking you to payment...' : `Pay ₦${priceNaira.toLocaleString('en-NG')} & Reserve My Spot`}
+          {status === 'submitting' ? 'Submitting...' : 'Reserve My Spot'}
         </Button>
       </FieldGroup>
     </form>

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { Calendar, MapPin, Ticket } from 'lucide-react'
+import { Calendar, MapPin } from 'lucide-react'
 import { EventDetails } from '@/components/event-details'
 import { Hero } from '@/components/hero'
 import { RegistrationForm } from '@/components/registration-form'
@@ -27,11 +27,6 @@ export default async function EventPage({ params }: Props) {
         <p className="flex items-center justify-center gap-2 pt-2 text-sm">
           <Calendar className="size-4" aria-hidden="true" /> {formatWhen(event)}
         </p>
-        {event.priceNaira != null && (
-          <p className="flex items-center justify-center gap-2 text-sm">
-            <Ticket className="size-4" aria-hidden="true" /> ₦{event.priceNaira.toLocaleString('en-NG')}
-          </p>
-        )}
         {event.venue && (
           <p className="flex items-center justify-center gap-2 text-sm">
             <MapPin className="size-4" aria-hidden="true" /> {event.venue}
@@ -42,12 +37,10 @@ export default async function EventPage({ params }: Props) {
       <section className="px-6 pb-16">
         {!event.registrationOpen ? (
           <p className="text-center font-display text-xl text-muted-foreground">Registration is closed.</p>
-        ) : event.priceNaira == null ? (
-          <p className="text-center font-display text-xl text-muted-foreground">Payment isn&apos;t set up for this event yet. Check back soon.</p>
         ) : (
           <>
             <h2 className="mb-6 text-center font-display text-2xl text-primary text-glow-pink">Register Now</h2>
-            <RegistrationForm eventSlug={event.slug} priceNaira={event.priceNaira} />
+            <RegistrationForm eventSlug={event.slug} />
           </>
         )}
       </section>
