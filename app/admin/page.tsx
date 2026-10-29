@@ -1,8 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 
-// Forces this page to fetch fresh data on every visit instead of
-// being cached — this is what was causing the "not updating" issue.
+import { AdminRegistrations } from '@/components/admin-registrations'
+
+// Always fetch fresh data instead of showing a cached copy.
 export const dynamic = 'force-dynamic'
 
 const supabase = createClient(
@@ -21,44 +22,33 @@ export default async function AdminPage({
     notFound()
   }
 
-  const { data: registrations } = await supabase
-    .from('registrations')
-    .select('*')
-    .order('created_at', { ascending: false })
+  const [registrationsResult, eventsResult] = await Promise.all([
+    supabase
+      .from('registrations')
+      .select(
+        'id, created_at, name, email, departments, matric_number, receipt_url, looking_forward_to, status, event_slug, payment_code, expires_at, confirmed_at',
+      )
+      .order('created_at', { ascending: false }),
+    supabase.from('events').select('slug, title, price_naira').order('created_at'),
+  ])
+
+  if (registrationsResult.error) {
+    return (
+      <main className="min-h-screen bg-black p-4 text-white">
+        <h1 className="mb-2 text-xl font-bold">Registrations</h1>
+        <p className="text-red-400">
+          Could not load registrations: {registrationsResult.error.message}
+        </p>
+      </main>
+    )
+  }
 
   return (
-    <main className="min-h-screen bg-black text-white p-4">
-      <h1 className="text-xl font-bold mb-1">SEES'30 MIXER — Registrations</h1>
-      <p className="text-neutral-400 text-sm mb-4">
-        {registrations?.length ?? 0} registered · pull to refresh for latest
-      </p>
-
-      <div className="flex flex-col gap-3">
-        {registrations?.map((r) => (
-          <div key={r.id} className="border border-neutral-700 rounded-lg p-3 text-sm">
-            <div className="font-semibold">{r.name}</div>
-            <div className="text-neutral-400">{r.email}</div>
-            <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-neutral-300">
-              <span>Dept: {r.departments}</span>
-              <span>Matric: {r.matric_number}</span>
-            </div>
-            <div className="mt-1">
-              <a
-                href={r.receipt_url}
-                target="_blank"
-                rel="noreferrer"
-                className="text-pink-400 underline"
-              >
-                View receipt
-              </a>
-            </div>
-            <div className="mt-1 italic text-neutral-400">"{r.looking_forward_to}"</div>
-            <div className="mt-1 text-xs text-neutral-500">
-              {new Date(r.created_at).toLocaleString()}
-            </div>
-          </div>
-        ))}
-      </div>
-    </main>
+    <AdminRegistrations
+      initialRows={registrationsResult.data ?? []}
+      events={eventsResult.data ?? []}
+      adminKey={params.key as string}
+      serverNow={new Date().toISOString()}
+    />
   )
 }
