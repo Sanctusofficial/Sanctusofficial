@@ -1,14 +1,12 @@
 'use client'
 
-import { upload } from '@vercel/blob/client'
-import { CheckCircle2, Upload } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { CheckCircle2, Clock, Copy } from 'lucide-react'
+import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
   Field,
-  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
@@ -24,59 +22,34 @@ const DEPARTMENTS = [
 ]
 
 type FormErrors = Partial<
-  Record<
-    'name' | 'email' | 'departments' | 'matricNumber' | 'receipt' | 'lookingForwardTo',
-    string
-  >
+  Record<'name' | 'email' | 'departments' | 'matricNumber' | 'lookingForwardTo', string>
 >
 
-// Resizes and compresses a phone camera photo in-browser before upload,
-// so weak mobile connections don't stall on a 5-10MB original file.
-async function compressImage(file: File, maxWidth = 1200, quality = 0.7): Promise<File> {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      img.src = e.target?.result as string
-    }
-    img.onload = () => {
-      const scale = Math.min(1, maxWidth / img.width)
-      const canvas = document.createElement('canvas')
-      canvas.width = img.width * scale
-      canvas.height = img.height * scale
-      const ctx = canvas.getContext('2d')
-      ctx?.drawImage(img, 0, 0, canvas.width, canvas.height)
-      canvas.toBlob(
-        (blob) => {
-          if (!blob) {
-            reject(new Error('Compression failed.'))
-            return
-          }
-          resolve(new File([blob], file.name, { type: 'image/jpeg' }))
-        },
-        'image/jpeg',
-        quality,
-      )
-    }
-    img.onerror = reject
-    reader.onerror = reject
-    reader.readAsDataURL(file)
-  })
+type RegisterResult = {
+  status: 'pending' | 'approved'
+  paymentCode: string | null
+  expiresAt: string | null
+  amountNaira: number
+  emailSent: boolean
+  event: {
+    title: string
+    bankName: string | null
+    accountNumber: string | null
+    accountName: string | null
+  }
 }
 
-export function RegistrationForm() {
-  const fileInputRef = useRef<HTMLInputElement>(null)
+export function RegistrationForm({ eventSlug = 'mixer' }: { eventSlug?: string }) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [departments, setDepartments] = useState<string[]>([])
   const [matricNumber, setMatricNumber] = useState('')
-  const [receiptFile, setReceiptFile] = useState<File | null>(null)
   const [lookingForwardTo, setLookingForwardTo] = useState('')
   const [errors, setErrors] = useState<FormErrors>({})
-  const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>(
-    'idle',
-  )
+  const [status, setStatus] = useState<'idle' | 'submitting' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState('')
+  const [result, setResult] = useState<RegisterResult | null>(null)
+  const [copied, setCopied] = useState<string | null>(null)
 
   function toggleDepartment(id: string, checked: boolean) {
     setDepartments((prev) =>
@@ -94,7 +67,6 @@ export function RegistrationForm() {
     }
     if (departments.length === 0) next.departments = 'Select at least one department.'
     if (!matricNumber.trim()) next.matricNumber = 'Matric number is required.'
-    if (!receiptFile) next.receipt = 'Upload your payment receipt.'
     if (!lookingForwardTo.trim())
       next.lookingForwardTo = 'Tell us what you\u2019re looking forward to.'
     return next
@@ -110,67 +82,26 @@ export function RegistrationForm() {
     setErrorMessage('')
 
     try {
-      if (!receiptFile) {
-        throw new Error('Please select a payment receipt image.')
-      }
-
-      // Compress before upload so large phone camera photos don't stall on slow connections.
-      const fileToUpload = await compressImage(receiptFile).catch(() => receiptFile)
-
-      // Upload execution with automatic fallback
-      const uploadPromise = (async () => {
-        try {
-          // Attempt 1: Vercel Blob client upload
-          const blob = await upload(fileToUpload.name, fileToUpload, {
-            access: 'public',
-            handleUploadUrl: '/api/receipt-upload',
-          })
-          return blob.url
-        } catch {
-          // Attempt 2: Fallback to direct FormData POST
-          const formData = new FormData()
-          formData.append('file', fileToUpload)
-          const res = await fetch('/api/receipt-upload', {
-            method: 'POST',
-            body: formData,
-          })
-          const data = await res.json()
-          if (!res.ok) throw new Error(data.error || 'Failed to upload receipt.')
-          return data.url || data.receiptUrl || ''
-        }
-      })()
-
-      // 30-second safety timeout to stop infinite spinning
-      const timeoutPromise = new Promise<string>((_, reject) =>
-        setTimeout(() => reject(new Error('Upload timed out. Please try again.')), 30000)
-      )
-
-      const receiptUrl = await Promise.race([uploadPromise, timeoutPromise])
-
-      if (!receiptUrl) {
-        throw new Error('Could not retrieve image URL after upload.')
-      }
-
-      // Submit registration data to Google Sheets API route
-      const res = await fetch('/api/submit', {
+      const res = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          eventSlug,
           name,
           email,
           departments,
           matricNumber,
-          receiptUrl,
           lookingForwardTo,
         }),
       })
 
+      const data = await res.json().catch(() => ({}))
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}))
-        throw new Error(body.error ?? 'Submission failed. Try again.')
+        throw new Error(data.error ?? 'Submission failed. Try again.')
       }
 
-      setStatus('success')
+      setResult(data as RegisterResult)
+      setStatus('idle')
     } catch (err) {
       console.error('Form submission error:', err)
       setStatus('error')
@@ -178,7 +109,18 @@ export function RegistrationForm() {
     }
   }
 
-  if (status === 'success') {
+  async function copyText(key: string, value: string) {
+    try {
+      await navigator.clipboard.writeText(value)
+      setCopied(key)
+      setTimeout(() => setCopied(null), 2000)
+    } catch {
+      // Copying is a convenience only. The text stays on screen to copy by hand.
+    }
+  }
+
+  // Free event: confirmed straight away.
+  if (result && result.status === 'approved') {
     return (
       <div
         role="status"
@@ -187,8 +129,97 @@ export function RegistrationForm() {
         <CheckCircle2 className="size-12 text-secondary text-glow-green" aria-hidden="true" />
         <h2 className="font-display text-2xl text-primary text-glow-pink">You&apos;re in!</h2>
         <p className="text-muted-foreground">
-          Your spot at SEES&apos;30 MIXER is locked. See you 31st August, 12PM &mdash; pull up
-          with your gang.
+          Your spot at {result.event.title} is confirmed. Check your email for details.
+        </p>
+      </div>
+    )
+  }
+
+  // Paid event: spot is held, waiting for the transfer.
+  if (result) {
+    const deadline = result.expiresAt
+      ? new Date(result.expiresAt).toLocaleString('en-NG', {
+          dateStyle: 'medium',
+          timeStyle: 'short',
+        })
+      : null
+
+    return (
+      <div
+        role="status"
+        className="mx-auto flex max-w-md flex-col gap-6 rounded-2xl border border-secondary/30 bg-card px-6 py-10"
+      >
+        <div className="flex flex-col items-center gap-3 text-center">
+          <CheckCircle2 className="size-12 text-secondary text-glow-green" aria-hidden="true" />
+          <h2 className="font-display text-2xl text-primary text-glow-pink">Spot reserved</h2>
+          <p className="text-muted-foreground">
+            Pay &#8358;{result.amountNaira.toLocaleString('en-NG')} to confirm your spot at{' '}
+            {result.event.title}.
+          </p>
+        </div>
+
+        {result.event.accountNumber && (
+          <div className="flex flex-col gap-3 rounded-xl border border-secondary/30 p-4 text-sm">
+            <div className="flex justify-between gap-4">
+              <span className="text-muted-foreground">Bank</span>
+              <span className="font-medium">{result.event.bankName}</span>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-muted-foreground">Account number</span>
+              <span className="flex items-center gap-2">
+                <span className="font-mono text-base font-medium">
+                  {result.event.accountNumber}
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => copyText('account', result.event.accountNumber as string)}
+                  aria-label="Copy account number"
+                >
+                  <Copy />
+                  {copied === 'account' ? 'Copied' : 'Copy'}
+                </Button>
+              </span>
+            </div>
+            <div className="flex justify-between gap-4">
+              <span className="text-muted-foreground">Account name</span>
+              <span className="text-right font-medium">{result.event.accountName}</span>
+            </div>
+          </div>
+        )}
+
+        {result.paymentCode && (
+          <div className="flex flex-col items-center gap-3 rounded-xl border border-primary/40 p-4 text-center">
+            <p className="text-sm text-muted-foreground">
+              Put this code in the transfer description so we can match your payment.
+            </p>
+            <p className="font-mono text-3xl font-semibold tracking-widest text-primary">
+              {result.paymentCode}
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => copyText('code', result.paymentCode as string)}
+              aria-label="Copy payment code"
+            >
+              <Copy />
+              {copied === 'code' ? 'Copied' : 'Copy code'}
+            </Button>
+          </div>
+        )}
+
+        {deadline && (
+          <p className="flex items-center justify-center gap-2 text-center text-sm text-muted-foreground">
+            <Clock className="size-4" aria-hidden="true" />
+            We hold your spot until {deadline}.
+          </p>
+        )}
+
+        <p className="text-center text-sm text-muted-foreground">
+          {result.emailSent ? 'We also emailed you these details. ' : ''}
+          Once we see your payment you&apos;ll get a confirmation email.
         </p>
       </div>
     )
@@ -256,29 +287,6 @@ export function RegistrationForm() {
           <FieldError>{errors.matricNumber}</FieldError>
         </Field>
 
-        <Field data-invalid={!!errors.receipt}>
-          <FieldLabel htmlFor="receipt">Payment Receipt</FieldLabel>
-          <input
-            ref={fileInputRef}
-            id="receipt"
-            type="file"
-            accept="image/*"
-            className="sr-only"
-            onChange={(e) => setReceiptFile(e.target.files?.[0] ?? null)}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => fileInputRef.current?.click()}
-            className="w-full justify-start border-secondary/40 text-foreground hover:bg-secondary/10"
-          >
-            <Upload data-icon="inline-start" />
-            {receiptFile ? receiptFile.name : 'Upload receipt image'}
-          </Button>
-          <FieldDescription>Screenshot or photo of your payment receipt.</FieldDescription>
-          <FieldError>{errors.receipt}</FieldError>
-        </Field>
-
         <Field data-invalid={!!errors.lookingForwardTo}>
           <FieldLabel htmlFor="looking-forward">What are you looking forward to?</FieldLabel>
           <Input
@@ -303,7 +311,7 @@ export function RegistrationForm() {
           className="w-full bg-primary text-primary-foreground shadow-[0_0_20px_oklch(0.73_0.24_355_/_50%)] hover:bg-primary/90"
         >
           {status === 'submitting' && <Spinner />}
-          {status === 'submitting' ? 'Submitting...' : 'Reserve My Spot'}
+          {status === 'submitting' ? 'Reserving...' : 'Reserve My Spot'}
         </Button>
       </FieldGroup>
     </form>
