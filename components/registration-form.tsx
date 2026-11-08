@@ -1,6 +1,7 @@
 'use client'
 
 import { CheckCircle2, Clock, Copy } from 'lucide-react'
+import Link from 'next/link'
 import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
@@ -219,7 +220,15 @@ export function RegistrationForm({ eventSlug = 'mixer' }: { eventSlug?: string }
 
         <p className="text-center text-sm text-muted-foreground">
           {result.emailSent ? 'We also emailed you these details. ' : ''}
-          Once we see your payment you&apos;ll get a confirmation email.
+          Once we see your payment we&apos;ll confirm your spot.
+        </p>
+
+        <p className="text-center text-sm text-muted-foreground">
+          Lost this screen? Check your status any time on the{' '}
+          <Link href="/status" className="text-primary underline">
+            status page
+          </Link>
+          .
         </p>
       </div>
     )
@@ -313,6 +322,13 @@ export function RegistrationForm({ eventSlug = 'mixer' }: { eventSlug?: string }
           {status === 'submitting' && <Spinner />}
           {status === 'submitting' ? 'Reserving...' : 'Reserve My Spot'}
         </Button>
+
+        <p className="text-center text-sm text-muted-foreground">
+          Already registered?{' '}
+          <Link href="/status" className="text-primary underline">
+            Check your status
+          </Link>
+        </p>
       </FieldGroup>
     </form>
   )
