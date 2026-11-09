@@ -225,7 +225,7 @@ export function RegistrationForm({ eventSlug = 'mixer' }: { eventSlug?: string }
 
         <p className="text-center text-sm text-muted-foreground">
           Lost this screen? Check your status any time on the{' '}
-          <Link href="/status" className="text-primary underline">
+          <Link href={`/status?event=${eventSlug}`} className="text-primary underline">
             status page
           </Link>
           .
@@ -325,7 +325,7 @@ export function RegistrationForm({ eventSlug = 'mixer' }: { eventSlug?: string }
 
         <p className="text-center text-sm text-muted-foreground">
           Already registered?{' '}
-          <Link href="/status" className="text-primary underline">
+          <Link href={`/status?event=${eventSlug}`} className="text-primary underline">
             Check your status
           </Link>
         </p>

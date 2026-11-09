@@ -234,5 +234,43 @@
     text-transform: uppercase;
     color: oklch(0.68 0.05 300);
   }
+
+  /* ---------- Landing page backgrounds ---------- */
+
+  /* Soft pink and green glows behind the hero. */
+  .vapor-glow {
+    background:
+      radial-gradient(60% 50% at 20% 10%, oklch(0.73 0.24 355 / 28%), transparent 70%),
+      radial-gradient(50% 45% at 85% 30%, oklch(0.75 0.22 145 / 18%), transparent 70%),
+      radial-gradient(70% 60% at 50% 100%, oklch(0.6 0.2 300 / 25%), transparent 70%);
+  }
+
+  /* Retro neon grid floor that fades into the page. */
+  .vapor-grid {
+    background-image:
+      linear-gradient(oklch(0.73 0.24 355 / 35%) 1px, transparent 1px),
+      linear-gradient(90deg, oklch(0.73 0.24 355 / 35%) 1px, transparent 1px);
+    background-size: 48px 48px;
+    transform: perspective(400px) rotateX(60deg);
+    transform-origin: bottom center;
+    mask-image: linear-gradient(to top, black 10%, transparent 90%);
+    animation: vapor-grid-scroll 6s linear infinite;
+  }
+  @keyframes vapor-grid-scroll {
+    from { background-position: 0 0; }
+    to { background-position: 0 48px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .vapor-grid,
+    .glitch-text::before,
+    .glitch-text::after {
+      animation: none;
+    }
+  }
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
