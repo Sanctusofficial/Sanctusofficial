@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
 import { createClient } from '@supabase/supabase-js'
-import { resend, FROM_EMAIL, approvalEmailHtml } from '@/lib/resend'
 
 const supabase = createClient(
   process.env.SUPABASE_URL as string,
@@ -31,7 +30,7 @@ export async function POST(request: Request) {
 
     const { data: registrant, error: fetchError } = await supabase
       .from('registrations')
-      .select('name, email, status, event_id')
+      .select('status, event_id')
       .eq('id', id)
       .single()
 
@@ -51,15 +50,13 @@ export async function POST(request: Request) {
       )
     }
 
-    let eventTitle = "SEES'30 MIXER"
     let capacity: number | null = null
     if (registrant.event_id) {
       const { data: event } = await supabase
         .from('events')
-        .select('title, capacity')
+        .select('capacity')
         .eq('id', registrant.event_id)
         .maybeSingle()
-      if (event?.title) eventTitle = event.title
       capacity = event?.capacity ?? null
     }
 
@@ -109,21 +106,7 @@ export async function POST(request: Request) {
       )
     }
 
-    // The approval is saved. A failed email must not make it look like it failed.
-    let emailSent = true
-    try {
-      await resend.emails.send({
-        from: FROM_EMAIL,
-        to: registrant.email,
-        subject: `You're confirmed — ${eventTitle}`,
-        html: approvalEmailHtml(registrant.name),
-      })
-    } catch (emailError) {
-      emailSent = false
-      console.error('[approve] email error:', emailError)
-    }
-
-    return NextResponse.json({ success: true, emailSent })
+    return NextResponse.json({ success: true })
   } catch (error) {
     console.error('[approve] error:', error)
     return NextResponse.json({ error: 'Failed to approve' }, { status: 500 })
