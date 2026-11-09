@@ -31,7 +31,7 @@ const STEPS = [
   {
     icon: CheckCircle2,
     title: "You're in",
-    body: 'Once we match your payment you get a confirmation email. Free events confirm instantly.',
+    body: 'Once we match your payment your spot shows as confirmed on the status page. Free events confirm instantly.',
   },
 ]
 

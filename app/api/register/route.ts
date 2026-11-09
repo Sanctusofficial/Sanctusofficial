@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { randomInt } from 'crypto'
 import { createClient } from '@supabase/supabase-js'
-import { resend, FROM_EMAIL, approvalEmailHtml } from '@/lib/resend'
 
 export const maxDuration = 30
 
@@ -20,39 +19,6 @@ function makePaymentCode() {
   let s = ''
   for (let i = 0; i < 5; i++) s += CODE_CHARS[randomInt(CODE_CHARS.length)]
   return `SEES-${s}`
-}
-
-// Stops a name like "<b>x</b>" from being treated as HTML inside the email.
-function esc(s: string) {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-}
-
-function paymentEmailHtml(o: {
-  name: string
-  eventTitle: string
-  amountNaira: number
-  code: string
-  deadline: string
-  bankName: string | null
-  accountNumber: string | null
-  accountName: string | null
-}) {
-  const bank = o.accountNumber
-    ? `<p>Bank: <b>${esc(o.bankName ?? '')}</b><br>Account number: <b>${esc(o.accountNumber)}</b><br>Account name: <b>${esc(o.accountName ?? '')}</b></p>`
-    : ''
-  return `<div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;line-height:1.5">
-  <h2>Your spot is reserved</h2>
-  <p>Hi ${esc(o.name)}, you're registered for <b>${esc(o.eventTitle)}</b>. Pay to confirm your spot.</p>
-  <p>Amount: <b>&#8358;${o.amountNaira.toLocaleString('en-NG')}</b></p>
-  ${bank}
-  <p>Put this code in the transfer description so we can match your payment:</p>
-  <p style="font-size:24px;letter-spacing:2px"><b>${esc(o.code)}</b></p>
-  <p>Your spot is held until <b>${esc(o.deadline)}</b>. After that it is released to other people.</p>
-</div>`
 }
 
 export async function POST(request: Request) {
@@ -151,49 +117,12 @@ export async function POST(request: Request) {
       })
 
       if (!insertError) {
-        // 5. Email the person. A failed email must not undo the registration.
-        let emailSent = false
-        try {
-          if (isFree) {
-            await resend.emails.send({
-              from: FROM_EMAIL,
-              to: email,
-              subject: `You're confirmed — ${event.title}`,
-              html: approvalEmailHtml(name),
-            })
-          } else if (paymentCode && expiresAt) {
-            await resend.emails.send({
-              from: FROM_EMAIL,
-              to: email,
-              subject: `Your spot is reserved — ${event.title}`,
-              html: paymentEmailHtml({
-                name,
-                eventTitle: event.title,
-                amountNaira: priceNaira,
-                code: paymentCode,
-                deadline: new Date(expiresAt).toLocaleString('en-NG', {
-                  dateStyle: 'medium',
-                  timeStyle: 'short',
-                  timeZone: 'Africa/Lagos',
-                }),
-                bankName: event.bank_name ?? null,
-                accountNumber: event.account_number ?? null,
-                accountName: event.account_name ?? null,
-              }),
-            })
-          }
-          emailSent = true
-        } catch (emailError) {
-          console.error('[register] email error:', emailError)
-        }
-
         return NextResponse.json({
           success: true,
           status: isFree ? 'approved' : 'pending',
           paymentCode,
           expiresAt,
           amountNaira: priceNaira,
-          emailSent,
           event: {
             title: event.title,
             bankName: event.bank_name ?? null,

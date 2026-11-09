@@ -128,7 +128,7 @@ export function AdminRegistrations({
 
   async function approve(r: Registration) {
     const who = r.name ?? 'this person'
-    if (!window.confirm(`Approve ${who}? This emails them a confirmation.`)) return
+    if (!window.confirm(`Approve ${who}?`)) return
 
     setBusyId(r.id)
     setBanner(null)
@@ -146,11 +146,10 @@ export function AdminRegistrations({
           x.id === r.id ? { ...x, status: 'approved', confirmed_at: new Date().toISOString() } : x,
         ),
       )
-      setBanner(
-        data.emailSent === false
-          ? { kind: 'warn', text: `${who} is approved, but the confirmation email did not send.` }
-          : { kind: 'ok', text: `${who} is approved and has been emailed.` },
-      )
+      setBanner({
+        kind: 'ok',
+        text: `${who} is approved. They can see it on the status page.`,
+      })
     } catch (err) {
       setBanner({
         kind: 'error',

@@ -31,7 +31,6 @@ type RegisterResult = {
   paymentCode: string | null
   expiresAt: string | null
   amountNaira: number
-  emailSent: boolean
   event: {
     title: string
     bankName: string | null
@@ -130,7 +129,7 @@ export function RegistrationForm({ eventSlug = 'mixer' }: { eventSlug?: string }
         <CheckCircle2 className="size-12 text-secondary text-glow-green" aria-hidden="true" />
         <h2 className="font-display text-2xl text-primary text-glow-pink">You&apos;re in!</h2>
         <p className="text-muted-foreground">
-          Your spot at {result.event.title} is confirmed. Check your email for details.
+          Your spot at {result.event.title} is confirmed. See you there!
         </p>
       </div>
     )
@@ -218,8 +217,11 @@ export function RegistrationForm({ eventSlug = 'mixer' }: { eventSlug?: string }
           </p>
         )}
 
+        <p className="text-center text-sm font-medium text-foreground">
+          Save your payment code now. A screenshot works.
+        </p>
+
         <p className="text-center text-sm text-muted-foreground">
-          {result.emailSent ? 'We also emailed you these details. ' : ''}
           Once we see your payment we&apos;ll confirm your spot.
         </p>
 
