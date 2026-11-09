@@ -65,7 +65,7 @@ export async function EventWhenWhere({ eventSlug = 'mixer' }: { eventSlug?: stri
         <div className="flex items-start gap-3">
           <MapPin className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden="true" />
           <p className="font-medium text-foreground">
-            {venue ?? 'Venue to be announced'}
+            {venue ?? 'HRDC near ISL UNILAG back gate'}
           </p>
         </div>
       </div>
