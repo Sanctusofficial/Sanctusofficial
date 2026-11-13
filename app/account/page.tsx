@@ -3,10 +3,10 @@
 import Link from 'next/link'
 import { FormEvent, useEffect, useState } from 'react'
 
-import { createBrowserAuthClient } from '@/lib/auth/browser'
+import { createBrowserAuthClient, hasBrowserAuthConfig } from '@/lib/auth/browser'
 
 export default function AccountPage() {
-  const supabase = createBrowserAuthClient()
+  const authConfigured = hasBrowserAuthConfig()
   const [mode, setMode] = useState<'sign-in' | 'sign-up'>('sign-in')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -16,11 +16,18 @@ export default function AccountPage() {
   const [userEmail, setUserEmail] = useState<string | null>(null)
 
   useEffect(() => {
+    if (!authConfigured) return
+    const supabase = createBrowserAuthClient()
     void supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email ?? null))
-  }, [supabase.auth])
+  }, [authConfigured])
 
   async function submit(event: FormEvent) {
     event.preventDefault()
+    if (!authConfigured) {
+      setMessage('Account sign-in is not configured yet. Ask the organizer to enable Supabase Auth.')
+      return
+    }
+    const supabase = createBrowserAuthClient()
     setMessage('')
     if (mode === 'sign-in') {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
@@ -44,6 +51,8 @@ export default function AccountPage() {
   }
 
   async function signOut() {
+    if (!authConfigured) return
+    const supabase = createBrowserAuthClient()
     await supabase.auth.signOut()
     setUserEmail(null)
   }
@@ -53,6 +62,11 @@ export default function AccountPage() {
       <section className="mx-auto max-w-md rounded-3xl border border-primary/30 bg-card p-6">
         <p className="font-display text-sm uppercase tracking-[0.3em] text-secondary">SEES&apos;30 identity</p>
         <h1 className="mt-3 font-display text-3xl text-primary text-glow-pink">Your passport</h1>
+        {!authConfigured && (
+          <p className="mt-6 rounded-lg border border-secondary/30 p-3 text-sm text-muted-foreground">
+            Passport sign-in is awaiting Supabase Auth configuration.
+          </p>
+        )}
         {userEmail ? (
           <div className="mt-6 space-y-4">
             <p>Signed in as {userEmail}.</p>
