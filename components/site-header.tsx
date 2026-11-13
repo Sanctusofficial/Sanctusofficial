@@ -6,6 +6,9 @@ const LINKS = [
   { href: '/#events', label: 'Events' },
   { href: '/#about', label: 'About' },
   { href: '/status', label: 'Status' },
+  { href: '/account', label: 'Passport' },
+  { href: '/memories', label: 'Memories' },
+  { href: '/play', label: 'Play' },
 ]
 
 export function SiteHeader() {

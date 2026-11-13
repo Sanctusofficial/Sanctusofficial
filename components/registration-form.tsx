@@ -31,6 +31,7 @@ type RegisterResult = {
   paymentCode: string | null
   expiresAt: string | null
   amountNaira: number
+  ticketToken: string
   event: {
     title: string
     bankName: string | null
@@ -131,6 +132,9 @@ export function RegistrationForm({ eventSlug = 'mixer' }: { eventSlug?: string }
         <p className="text-muted-foreground">
           Your spot at {result.event.title} is confirmed. See you there!
         </p>
+        <Link href={`/tickets/${result.ticketToken}`} className="text-primary underline">
+          Open your private QR ticket
+        </Link>
       </div>
     )
   }
@@ -223,6 +227,9 @@ export function RegistrationForm({ eventSlug = 'mixer' }: { eventSlug?: string }
 
         <p className="text-center text-sm text-muted-foreground">
           Once we see your payment we&apos;ll confirm your spot.
+        </p>
+        <p className="text-center text-sm text-muted-foreground">
+          After approval, your private QR ticket will be available from your status page.
         </p>
 
         <p className="text-center text-sm text-muted-foreground">

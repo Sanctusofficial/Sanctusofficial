@@ -13,6 +13,7 @@ type StatusResult = {
   status: 'pending' | 'approved' | 'expired'
   name: string | null
   paymentCode: string | null
+  ticketToken: string | null
   expiresAt: string | null
   amountNaira: number
   event: {
@@ -124,6 +125,11 @@ export function StatusLookup({ eventSlug = 'mixer' }: { eventSlug?: string }) {
             {result.name ? `${result.name}, your` : 'Your'} spot at {result.event.title} is
             confirmed. See you there.
           </p>
+          {result.ticketToken && (
+            <Link href={`/tickets/${result.ticketToken}`} className="text-primary underline">
+              Open private QR ticket
+            </Link>
+          )}
         </div>
       )}
 
