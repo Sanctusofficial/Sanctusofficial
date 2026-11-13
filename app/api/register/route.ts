@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { randomInt } from 'crypto'
+import { randomBytes, randomInt } from 'crypto'
 import { createClient } from '@supabase/supabase-js'
 
 export const maxDuration = 30
@@ -19,6 +19,10 @@ function makePaymentCode() {
   let s = ''
   for (let i = 0; i < 5; i++) s += CODE_CHARS[randomInt(CODE_CHARS.length)]
   return `SEES-${s}`
+}
+
+function makeTicketToken() {
+  return randomBytes(32).toString('hex')
 }
 
 export async function POST(request: Request) {
@@ -100,6 +104,7 @@ export async function POST(request: Request) {
 
     for (let attempt = 0; attempt < 5; attempt++) {
       const paymentCode = isFree ? null : makePaymentCode()
+      const ticketToken = makeTicketToken()
 
       const { error: insertError } = await supabase.from('registrations').insert({
         event_id: event.id,
@@ -114,6 +119,7 @@ export async function POST(request: Request) {
         expires_at: expiresAt,
         confirmed_at: isFree ? now.toISOString() : null,
         confirmed_by: isFree ? 'auto (free event)' : null,
+        ticket_token: ticketToken,
       })
 
       if (!insertError) {
@@ -123,6 +129,7 @@ export async function POST(request: Request) {
           paymentCode,
           expiresAt,
           amountNaira: priceNaira,
+          ticketToken,
           event: {
             title: event.title,
             bankName: event.bank_name ?? null,

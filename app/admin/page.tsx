@@ -2,6 +2,8 @@ import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 
 import { AdminRegistrations } from '@/components/admin-registrations'
+import { CheckInScanner } from '@/components/check-in-scanner'
+import { MemoryUploader } from '@/components/memory-uploader'
 
 // Always fetch fresh data instead of showing a cached copy.
 export const dynamic = 'force-dynamic'
@@ -44,11 +46,15 @@ export default async function AdminPage({
   }
 
   return (
-    <AdminRegistrations
-      initialRows={registrationsResult.data ?? []}
-      events={eventsResult.data ?? []}
-      adminKey={params.key as string}
-      serverNow={new Date().toISOString()}
-    />
+    <main className="min-h-screen space-y-6 p-4">
+      <CheckInScanner adminKey={params.key as string} />
+      <MemoryUploader adminKey={params.key as string} eventSlugs={(eventsResult.data ?? []).map((event) => event.slug)} />
+      <AdminRegistrations
+        initialRows={registrationsResult.data ?? []}
+        events={eventsResult.data ?? []}
+        adminKey={params.key as string}
+        serverNow={new Date().toISOString()}
+      />
+    </main>
   )
 }
