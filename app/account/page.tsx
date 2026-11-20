@@ -30,21 +30,51 @@ export default function AccountPage() {
     const supabase = createBrowserAuthClient()
     setMessage('')
     if (mode === 'sign-in') {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) return setMessage(error.message)
+      // Fallback for logins whose profile the sign-up trigger could not create.
+      const { data: profile } = await supabase
+        .from('member_profiles')
+        .select('id')
+        .eq('id', data.user.id)
+        .maybeSingle()
+      if (!profile) {
+        const meta = data.user.user_metadata ?? {}
+        const metaName = typeof meta.name === 'string' ? meta.name.trim() : ''
+        const metaMatric = typeof meta.matric_number === 'string' ? meta.matric_number : ''
+        if (!metaName || !metaMatric) {
+          return setMessage('Your account has no name or matric number. Contact the organizers to link it.')
+        }
+        const { error: profileError } = await supabase.from('member_profiles').insert({
+          id: data.user.id,
+          name: metaName,
+          email: (data.user.email ?? email).toLowerCase(),
+          matric_number: metaMatric.replace(/\s+/g, '').toUpperCase(),
+        })
+        if (profileError) {
+          return setMessage(
+            profileError.code === '23505'
+              ? 'That matric number is already linked to another account. Contact the organizers.'
+              : profileError.message,
+          )
+        }
+      }
       window.location.href = '/passport'
     } else {
-      const { data, error } = await supabase.auth.signUp({ email, password })
+      // Profile is created server-side from this metadata (see the
+      // create_member_profile_from_signup trigger); there is no session yet.
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name: name.trim(),
+            matric_number: matricNumber.replace(/\s+/g, '').toUpperCase(),
+          },
+          emailRedirectTo: `${window.location.origin}/account`,
+        },
+      })
       if (error) return setMessage(error.message)
-      if (data.user) {
-        const { error: profileError } = await supabase.from('member_profiles').upsert({
-          id: data.user.id,
-          name,
-          email: email.toLowerCase(),
-          matric_number: matricNumber.replace(/\s+/g, '').toUpperCase(),
-        })
-        if (profileError) return setMessage(profileError.message)
-      }
       setMessage('Account created. Check your email to verify it, then sign in.')
       setMode('sign-in')
     }
