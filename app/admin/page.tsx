@@ -2,7 +2,6 @@ import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 
 import { AdminRegistrations } from '@/components/admin-registrations'
-import { CheckInScanner } from '@/components/check-in-scanner'
 import { MemoryUploader } from '@/components/memory-uploader'
 
 // Always fetch fresh data instead of showing a cached copy.
@@ -47,7 +46,13 @@ export default async function AdminPage({
 
   return (
     <main className="min-h-screen space-y-6 p-4">
-      <CheckInScanner adminKey={params.key as string} />
+      <a
+        href={`/admin/check-in?key=${encodeURIComponent(params.key as string)}`}
+        className="block rounded-2xl border border-secondary/40 bg-card p-5 font-display text-xl text-secondary"
+      >
+        Open door check-in scanner →
+        <span className="mt-1 block font-sans text-sm text-muted-foreground">Open this on each door phone. Scans verify instantly.</span>
+      </a>
       <MemoryUploader adminKey={params.key as string} eventSlugs={(eventsResult.data ?? []).map((event) => event.slug)} />
       <AdminRegistrations
         initialRows={registrationsResult.data ?? []}
