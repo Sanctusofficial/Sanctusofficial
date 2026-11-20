@@ -26,7 +26,7 @@ export async function POST(request: Request) {
 
     const { data: rows, error } = await supabase
       .from('registrations')
-      .select('name, email, status, payment_code, expires_at, created_at')
+      .select('name, email, status, payment_code, expires_at, ticket_token, created_at')
       .eq('event_slug', eventSlug)
       .eq('matric_number', matricNumber)
       .order('created_at', { ascending: false })
@@ -68,6 +68,7 @@ export async function POST(request: Request) {
       status,
       name: match.name,
       paymentCode: match.payment_code,
+      ticketToken: status === 'approved' ? match.ticket_token : null,
       expiresAt: match.expires_at,
       amountNaira: event?.price_naira ?? 0,
       event: {
