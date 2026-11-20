@@ -20,7 +20,7 @@ export default async function TicketPage({
     width: 320,
     color: { dark: '#14001f', light: '#ffffff' },
   })
-  const event = ticket.event
+  const event = ticket.events
 
   return (
     <main className="min-h-screen px-4 py-12">

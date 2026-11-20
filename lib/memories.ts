@@ -7,7 +7,8 @@ export type EventMemory = {
   caption: string | null
   sort_order: number
   created_at: string
-  event?: { slug: string; title: string } | null
+  // Supabase returns FK joins under the foreign table name
+  events?: { slug: string; title: string } | null
 }
 
 export async function getMemories(slug?: string) {

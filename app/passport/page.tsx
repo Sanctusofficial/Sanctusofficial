@@ -28,7 +28,7 @@ export default async function PassportPage() {
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
           {tickets.map((ticket) => (
             <article key={ticket.id} className="rounded-2xl border border-border bg-card p-5">
-              <h2 className="font-display text-xl text-primary">{ticket.event?.title ?? ticket.event_slug}</h2>
+              <h2 className="font-display text-xl text-primary">{ticket.events?.title ?? ticket.event_slug}</h2>
               <p className="mt-2 text-sm text-muted-foreground">Status: {ticket.status}</p>
               {ticket.checked_in_at ? (
                 <p className="mt-3 text-sm text-secondary">✓ Attended {new Date(ticket.checked_in_at).toLocaleDateString('en-NG')}</p>

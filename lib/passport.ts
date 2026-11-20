@@ -11,7 +11,8 @@ export type Ticket = {
   ticket_token: string
   checked_in_at: string | null
   created_at: string
-  event?: { title: string; starts_at: string | null; venue: string | null } | null
+  // Supabase returns FK joins under the foreign table name
+  events?: { title: string; starts_at: string | null; venue: string | null } | null
 }
 
 export async function getTicket(token: string) {
