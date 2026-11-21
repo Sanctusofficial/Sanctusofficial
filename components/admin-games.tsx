@@ -12,9 +12,10 @@ type QuizState = {
   total: number
   teams: Team[]
   question: { prompt: string; options: string[]; correct: number | null; remainingMs: number; seconds: number; double?: boolean } | null
-  answeredTeams: string[]
-  results: { team: string; choice: number; correct: boolean; points: number }[] | null
+  teamProgress: Record<string, { players: number; answered: number; correct: number }>
   totals: Record<string, number>
+  playerCount: number
+  topPlayers: { name: string; team: string; points: number }[]
 }
 
 const card = 'rounded-2xl border border-border bg-card p-5'
@@ -190,7 +191,8 @@ function QuizHost({ adminKey }: { adminKey: string }) {
   if (!state) return <section className={card}>Loading quiz…</section>
   const q = state.question
   const remaining = q && state.status === 'question' ? Math.max(0, Math.ceil((q.remainingMs - (now - fetchedAt)) / 1000)) : 0
-  const allAnswered = state.answeredTeams.length >= state.teams.length
+  const answeredTotal = Object.values(state.teamProgress).reduce((n, t) => n + t.answered, 0)
+  const allAnswered = state.playerCount > 0 && answeredTotal >= state.playerCount
   const isLast = state.number >= state.total
 
   return (
@@ -201,7 +203,10 @@ function QuizHost({ adminKey }: { adminKey: string }) {
           {state.status === 'lobby' ? 'Lobby' : state.status === 'finished' ? 'Finished' : `Question ${state.number} of ${state.total}`}
         </span>
       </div>
-      <p className="mt-1 text-sm text-muted-foreground">Teams join at <b>/quiz</b> on one phone each. Read each question out loud too.</p>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Everyone joins at <b>/quiz</b> on their own phone. <b>{state.playerCount}</b> {state.playerCount === 1 ? 'player has' : 'players have'} joined.
+        {state.status === 'question' && <> <b>{answeredTotal}</b> answered so far.</>}
+      </p>
 
       {q && state.status !== 'lobby' && (
         <div className="mt-4 space-y-2 rounded-xl bg-muted/50 p-4">
@@ -219,13 +224,14 @@ function QuizHost({ adminKey }: { adminKey: string }) {
 
       <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
         {state.teams.map((t) => {
-          const r = state.results?.find((x) => x.team === t.slug)
+          const p = state.teamProgress[t.slug] ?? { players: 0, answered: 0, correct: 0 }
           return (
             <div key={t.slug} className="rounded-xl border-2 p-2 text-center text-sm" style={{ borderColor: t.color }}>
               <p className="font-semibold" style={{ color: t.color }}>{t.name.replace('Team ', '')}</p>
-              <p className="tabular-nums">{(state.totals[t.slug] ?? 0).toLocaleString()}</p>
-              {state.status !== 'lobby' && state.status !== 'finished' && (
-                <p className="text-xs">{r ? (r.correct ? `✓ +${r.points}` : '✗ wrong') : 'waiting…'}</p>
+              <p className="tabular-nums" title="Average quiz points per player">{(state.totals[t.slug] ?? 0).toLocaleString()} avg</p>
+              <p className="text-xs text-muted-foreground">{p.players} players</p>
+              {(state.status === 'question' || state.status === 'reveal') && (
+                <p className="text-xs">{p.answered}/{p.players} answered{state.status === 'reveal' ? ` · ${p.correct} ✓` : ''}</p>
               )}
             </div>
           )
@@ -249,6 +255,19 @@ function QuizHost({ adminKey }: { adminKey: string }) {
         <button type="button" disabled={busy} onClick={() => void control('reset')} className="rounded-lg border border-red-500/50 px-4 py-3 text-red-500">Reset quiz</button>
       </div>
       {state.total === 0 && <p className="mt-2 text-sm text-amber-500">Add questions below before starting.</p>}
+      {state.topPlayers.length > 0 && state.status !== 'lobby' && (
+        <div className="mt-4">
+          <p className="text-sm font-semibold">Top players</p>
+          <ol className="mt-1 grid gap-x-6 text-sm sm:grid-cols-2">
+            {state.topPlayers.map((p, i) => (
+              <li key={`${p.name}-${i}`} className="flex justify-between gap-2">
+                <span className="truncate"><span style={{ color: state.teams.find((t) => t.slug === p.team)?.color }}>●</span> {i + 1}. {p.name}</span>
+                <span className="tabular-nums">{p.points.toLocaleString()}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
       {error && <p role="alert" className="mt-2 text-sm text-amber-500">{error}</p>}
     </section>
   )
