@@ -1,0 +1,38 @@
+// Cards store indexes into this list, so only ever ADD prompts to the end.
+// Reordering or deleting would change the squares on cards already dealt.
+export const BINGO_PROMPTS = [
+  'Is in a different department from you',
+  'Is in their final year',
+  'Is a fresher at their first SEES event',
+  'Has built a project with an Arduino or Raspberry Pi',
+  'Has done an internship (SIWES counts)',
+  'Can name 3 logic gates in 5 seconds',
+  'Has pulled an all-nighter before an exam this semester',
+  'Codes in a language other than Python',
+  'Has a side hustle',
+  'Plays a musical instrument',
+  'Was born outside Lagos',
+  'Speaks 3 or more languages',
+  'Wants to start their own company',
+  'Has a GitHub account with a project on it',
+  'Has repaired a phone or laptop themselves',
+  'Supports the same football club as you',
+  'Has the same birth month as you',
+  'Has never missed an 8am lecture (they claim)',
+  'Wants to work abroad after school',
+  'Has used ChatGPT or Claude for an assignment (they admit it)',
+  'Has been to a hackathon',
+  'Can solve a Rubik’s cube',
+  'Has the same favourite Nollywood movie as you',
+  'Is wearing something with the SEES colours',
+  'Has a hobby you have never tried',
+  'Knows what Ohm’s law is without googling',
+  'Has designed a PCB or circuit diagram',
+  'Is part of a club or society besides SEES',
+  'Wants to go into renewable energy',
+  'Can recommend a good place to eat near campus',
+  'Has taken a photo with you tonight',
+  'Has a LinkedIn profile you connected to today',
+] as const
+
+export const BINGO_CENTER_PROMPT = 'Made it to the SEES ’30 Mixer'

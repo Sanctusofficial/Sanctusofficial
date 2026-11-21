@@ -96,6 +96,7 @@ export function BingoLeaderboard() {
       )}
 
       <p className="text-xs text-muted-foreground">
+        Every square is verified by scanning the other guest&apos;s code, and both must be checked in at the door.
         Ranked by completed lines, then people met, then who got BINGO first. Updates every 5 seconds
         {updated ? ` · last ${updated.toLocaleTimeString('en-NG', { timeZone: 'Africa/Lagos' })}` : ''}
         {error && rows ? ' · reconnecting…' : ''}
