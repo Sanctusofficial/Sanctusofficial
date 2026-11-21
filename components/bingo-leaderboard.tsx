@@ -88,7 +88,7 @@ export function BingoLeaderboard() {
               </span>
               <span className="shrink-0 text-right">
                 <span className="block font-display text-secondary">{row.lines} {row.lines === 1 ? 'line' : 'lines'}</span>
-                <span className="text-xs text-muted-foreground">{row.squares}/24 met</span>
+                <span className="text-xs text-muted-foreground">{row.squares}/8 found</span>
               </span>
             </li>
           ))}
@@ -96,7 +96,7 @@ export function BingoLeaderboard() {
       )}
 
       <p className="text-xs text-muted-foreground">
-        Every square is verified by scanning the other guest&apos;s code, and both must be checked in at the door.
+        Guests are assigned at random and every square is verified by scanning that person&apos;s code.
         Ranked by completed lines, then people met, then who got BINGO first. Updates every 5 seconds
         {updated ? ` · last ${updated.toLocaleTimeString('en-NG', { timeZone: 'Africa/Lagos' })}` : ''}
         {error && rows ? ' · reconnecting…' : ''}

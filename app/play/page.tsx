@@ -5,7 +5,7 @@ import { SiteHeader } from '@/components/site-header'
 
 export const metadata: Metadata = {
   title: "Networking Bingo · SEES '30",
-  description: 'Meet people at the SEES ’30 Mixer, fill your bingo card and claim a prize.',
+  description: 'Meet people you don’t know yet at the SEES ’30 Mixer.',
 }
 
 export default function PlayPage() {

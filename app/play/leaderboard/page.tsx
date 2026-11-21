@@ -5,7 +5,7 @@ import { SiteHeader } from '@/components/site-header'
 
 export const metadata: Metadata = {
   title: "Bingo Leaderboard · SEES '30",
-  description: 'Live Networking Bingo standings at the SEES ’30 Mixer.',
+  description: 'Live Mystery Guest Bingo standings at the SEES ’30 Mixer.',
 }
 
 export default function BingoLeaderboardPage() {
