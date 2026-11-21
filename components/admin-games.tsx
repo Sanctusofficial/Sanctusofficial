@@ -5,13 +5,13 @@ import { useCallback, useEffect, useState } from 'react'
 type Team = { slug: string; name: string; color: string }
 type Game = { id: string; name: string }
 type LogRow = { id: string; game_id: string; team_slug: string; points: number; note: string | null; created_at: string }
-type Question = { id: string; position: number; prompt: string; options: string[]; correct: number; seconds: number }
+type Question = { id: string; position: number; prompt: string; options: string[]; correct: number; seconds: number; double_points: boolean }
 type QuizState = {
   status: 'lobby' | 'question' | 'reveal' | 'finished'
   number: number
   total: number
   teams: Team[]
-  question: { prompt: string; options: string[]; correct: number | null; remainingMs: number; seconds: number } | null
+  question: { prompt: string; options: string[]; correct: number | null; remainingMs: number; seconds: number; double?: boolean } | null
   answeredTeams: string[]
   results: { team: string; choice: number; correct: boolean; points: number }[] | null
   totals: Record<string, number>
@@ -206,7 +206,7 @@ function QuizHost({ adminKey }: { adminKey: string }) {
       {q && state.status !== 'lobby' && (
         <div className="mt-4 space-y-2 rounded-xl bg-muted/50 p-4">
           <div className="flex items-start justify-between gap-3">
-            <p className="text-lg font-semibold">{q.prompt}</p>
+            <p className="text-lg font-semibold">{q.double && <b className="mr-2 rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground">2×</b>}{q.prompt}</p>
             {state.status === 'question' && <span className={`font-display text-3xl tabular-nums ${remaining <= 5 ? 'text-red-500' : 'text-secondary'}`}>{remaining}</span>}
           </div>
           <ol className="space-y-1 text-sm">
@@ -255,7 +255,7 @@ function QuizHost({ adminKey }: { adminKey: string }) {
 }
 
 // ---------- Question editor ----------
-const EMPTY = { prompt: '', options: ['', '', '', ''], correct: 0, seconds: 20 }
+const EMPTY = { prompt: '', options: ['', '', '', ''], correct: 0, seconds: 20, double: false }
 
 function QuestionEditor({ adminKey }: { adminKey: string }) {
   const api = useAdminFetch(adminKey)
@@ -295,7 +295,7 @@ function QuestionEditor({ adminKey }: { adminKey: string }) {
     const kept = form.options.map((o, i) => ({ o: o.trim(), i })).filter((x) => x.o)
     const correct = kept.findIndex((x) => x.i === form.correct)
     if (correct < 0) return setError('The correct answer can’t be an empty option.')
-    const payload = { prompt: form.prompt, options: kept.map((x) => x.o), correct, seconds: form.seconds }
+    const payload = { prompt: form.prompt, options: kept.map((x) => x.o), correct, seconds: form.seconds, double: form.double }
     const ok = await run(() => (editing ? api('/api/admin/quiz/questions', 'PUT', { id: editing, ...payload }) : api('/api/admin/quiz/questions', 'POST', payload)))
     if (ok) {
       setForm(EMPTY)
@@ -305,7 +305,7 @@ function QuestionEditor({ adminKey }: { adminKey: string }) {
 
   function edit(q: Question) {
     setEditing(q.id)
-    setForm({ prompt: q.prompt, options: [...q.options, '', '', '', ''].slice(0, 4), correct: q.correct, seconds: q.seconds })
+    setForm({ prompt: q.prompt, options: [...q.options, '', '', '', ''].slice(0, 4), correct: q.correct, seconds: q.seconds, double: q.double_points })
     document.getElementById('question-form')?.scrollIntoView({ behavior: 'smooth' })
   }
 
@@ -337,6 +337,10 @@ function QuestionEditor({ adminKey }: { adminKey: string }) {
             {[10, 15, 20, 30, 45, 60].map((s) => <option key={s} value={s}>{s} seconds</option>)}
           </select>
         </label>
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={form.double} onChange={(e) => setForm({ ...form, double: e.target.checked })} className="size-5" />
+          Double points (2×)
+        </label>
         {error && <p role="alert" className="text-sm text-amber-500">{error}</p>}
         <div className="flex gap-2">
           <button disabled={busy} className="rounded-lg bg-primary px-5 py-3 font-semibold text-primary-foreground disabled:opacity-50">{editing ? 'Save changes' : 'Add question'}</button>
@@ -350,7 +354,7 @@ function QuestionEditor({ adminKey }: { adminKey: string }) {
             <li key={q.id} className="rounded-xl border border-border p-3">
               <div className="flex items-start justify-between gap-3">
                 <p className="font-semibold">{index + 1}. {q.prompt}</p>
-                <span className="shrink-0 text-xs text-muted-foreground">{q.seconds}s</span>
+                <span className="shrink-0 text-xs text-muted-foreground">{q.double_points ? '2× · ' : ''}{q.seconds}s</span>
               </div>
               <p className="mt-1 text-sm text-muted-foreground">
                 {q.options.map((o, i) => (

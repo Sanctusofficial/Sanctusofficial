@@ -24,7 +24,7 @@ export async function getQuizState({ host = false } = {}) {
   let question = null
   let answers: { team: string; choice: number; correct: boolean; points: number }[] = []
   if (s.question_id && status !== 'lobby') {
-    const { data: q } = await db.from('quiz_questions').select('id, prompt, options, correct, seconds').eq('id', s.question_id).maybeSingle()
+    const { data: q } = await db.from('quiz_questions').select('id, prompt, options, correct, seconds, double_points').eq('id', s.question_id).maybeSingle()
     if (q) {
       const elapsed = s.started_at ? Date.now() - Date.parse(s.started_at) : 0
       const showCorrect = host || status === 'reveal' || status === 'finished'
@@ -33,6 +33,7 @@ export async function getQuizState({ host = false } = {}) {
         prompt: q.prompt,
         options: q.options as string[],
         seconds: q.seconds,
+        double: q.double_points as boolean,
         remainingMs: status === 'question' ? Math.max(0, q.seconds * 1000 - elapsed) : 0,
         correct: showCorrect ? q.correct : null,
       }

@@ -17,7 +17,7 @@ function clean(body: Record<string, unknown>) {
   if (options.some((o) => o.length > 80)) return { error: 'Keep each answer under 80 characters.' }
   if (!Number.isInteger(correct) || correct < 0 || correct >= options.length) return { error: 'Pick which answer is correct.' }
   if (seconds < 5 || seconds > 120) return { error: 'Time limit must be 5–120 seconds.' }
-  return { prompt, options, correct, seconds }
+  return { prompt, options, correct, seconds, double_points: Boolean(body.double) }
 }
 
 // GET -> all questions in play order.
@@ -25,7 +25,7 @@ export async function GET(request: Request) {
   if (!isAdmin(request)) return denied()
   const { data, error } = await createServiceClient()
     .from('quiz_questions')
-    .select('id, position, prompt, options, correct, seconds')
+    .select('id, position, prompt, options, correct, seconds, double_points')
     .order('position')
     .order('created_at')
   if (error) return NextResponse.json({ error: error.message }, { status: 502 })

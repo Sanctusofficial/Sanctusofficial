@@ -8,7 +8,7 @@ type State = {
   number: number
   total: number
   teams: Team[]
-  question: { id: string; prompt: string; options: string[]; seconds: number; remainingMs: number; correct: number | null } | null
+  question: { id: string; prompt: string; options: string[]; seconds: number; remainingMs: number; correct: number | null; double?: boolean } | null
   answeredTeams: string[]
   results: { team: string; choice: number; correct: boolean; points: number }[] | null
   totals: Record<string, number>
@@ -147,7 +147,7 @@ export function TeamQuiz() {
       {q && (state.status === 'question' || state.status === 'reveal') && (
         <div className="space-y-4">
           <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <span>Question {state.number} of {state.total}</span>
+            <span>Question {state.number} of {state.total}{q.double && <b className="ml-2 rounded-full bg-secondary px-2 py-0.5 text-secondary-foreground">2× POINTS</b>}</span>
             {state.status === 'question' && (
               <span className={`font-display text-3xl tabular-nums ${remaining <= 5 ? 'text-red-500' : 'text-secondary'}`}>{remaining}</span>
             )}
