@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { usePoll } from '@/lib/use-poll'
 
 type Row = {
   display_name: string
@@ -20,28 +21,20 @@ export function BingoLeaderboard() {
   const [error, setError] = useState(false)
   const [updated, setUpdated] = useState<Date | null>(null)
 
-  useEffect(() => {
-    let alive = true
-    async function load() {
-      try {
-        const response = await fetch('/api/bingo', { cache: 'no-store' })
-        if (!response.ok) throw new Error()
-        const data = await response.json()
-        if (!alive) return
-        setRows(data.players ?? [])
-        setError(false)
-        setUpdated(new Date())
-      } catch {
-        if (alive) setError(true)
-      }
+  usePoll(async () => {
+    try {
+      const response = await fetch('/api/bingo', { cache: 'no-store' })
+      if (!response.ok) throw new Error()
+      const data = await response.json()
+      setRows(data.players ?? [])
+      setError(false)
+      setUpdated(new Date())
+      return true
+    } catch {
+      setError(true)
+      return false
     }
-    void load()
-    const timer = setInterval(load, 5000)
-    return () => {
-      alive = false
-      clearInterval(timer)
-    }
-  }, [])
+  }, 10000)
 
   const firstBingo = rows
     ?.filter((r) => r.first_bingo_at)
@@ -97,7 +90,7 @@ export function BingoLeaderboard() {
 
       <p className="text-xs text-muted-foreground">
         Guests are assigned at random and every square is verified by scanning that person&apos;s code.
-        Ranked by completed lines, then people met, then who got BINGO first. Updates every 5 seconds
+        Ranked by completed lines, then people met, then who got BINGO first. Updates every 10 seconds
         {updated ? ` · last ${updated.toLocaleTimeString('en-NG', { timeZone: 'Africa/Lagos' })}` : ''}
         {error && rows ? ' · reconnecting…' : ''}
       </p>

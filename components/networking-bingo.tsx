@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { BINGO_ICEBREAKERS, BINGO_JOIN_QUESTIONS } from '@/lib/bingo-prompts'
+import { usePoll } from '@/lib/use-poll'
 
 const CENTER = 4
 const TOKEN_KEY = 'sees30-bingo-token-v3'
@@ -117,11 +118,11 @@ export function NetworkingBingo() {
   }, [refresh])
 
   // Picks up door check-in and squares completed by the other person finding you.
-  useEffect(() => {
-    if (!token) return
-    const timer = setInterval(() => void refresh(token), 15000)
-    return () => clearInterval(timer)
-  }, [token, refresh])
+  usePoll(async () => {
+    if (!token) return true
+    await refresh(token)
+    return true
+  }, 15000, token)
 
   useEffect(() => {
     if (!state?.code) return

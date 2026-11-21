@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { usePoll } from '@/lib/use-poll'
 
 type Team = { slug: string; name: string; color: string }
 type State = {
@@ -53,28 +54,23 @@ export function TeamQuiz() {
   }, [])
 
   const playerId = player?.id ?? ''
-  useEffect(() => {
-    let alive = true
-    async function load() {
+  usePoll(
+    async () => {
       try {
         const response = await fetch(`/api/quiz${playerId ? `?me=${playerId}` : ''}`, { cache: 'no-store' })
         if (!response.ok) throw new Error()
-        const json = (await response.json()) as State
-        if (!alive) return
-        setState(json)
+        setState((await response.json()) as State)
         setFetchedAt(Date.now())
         setOffline(false)
+        return true
       } catch {
-        if (alive) setOffline(true)
+        setOffline(true)
+        return false
       }
-    }
-    void load()
-    const timer = setInterval(load, 1500)
-    return () => {
-      alive = false
-      clearInterval(timer)
-    }
-  }, [playerId])
+    },
+    2000,
+    playerId,
+  )
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 250)

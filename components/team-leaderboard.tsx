@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { usePoll } from '@/lib/use-poll'
 
 type Standing = { slug: string; name: string; color: string; total: number; byGame: Record<string, number> }
 type Game = { id: string; name: string }
@@ -11,28 +12,18 @@ export function TeamLeaderboard() {
   const [data, setData] = useState<{ standings: Standing[]; games: Game[] } | null>(null)
   const [error, setError] = useState(false)
 
-  useEffect(() => {
-    let alive = true
-    async function load() {
-      try {
-        const response = await fetch('/api/games', { cache: 'no-store' })
-        if (!response.ok) throw new Error()
-        const json = await response.json()
-        if (alive) {
-          setData(json)
-          setError(false)
-        }
-      } catch {
-        if (alive) setError(true)
-      }
+  usePoll(async () => {
+    try {
+      const response = await fetch('/api/games', { cache: 'no-store' })
+      if (!response.ok) throw new Error()
+      setData(await response.json())
+      setError(false)
+      return true
+    } catch {
+      setError(true)
+      return false
     }
-    void load()
-    const timer = setInterval(load, 5000)
-    return () => {
-      alive = false
-      clearInterval(timer)
-    }
-  }, [])
+  }, 10000)
 
   if (!data) return <p className="text-muted-foreground">{error ? 'Leaderboard unavailable. Retrying…' : 'Loading…'}</p>
 
@@ -87,7 +78,7 @@ export function TeamLeaderboard() {
         )}
       </section>
 
-      <p className="text-xs text-muted-foreground">Updates every 5 seconds{error ? ' · reconnecting…' : ''}</p>
+      <p className="text-xs text-muted-foreground">Updates every 10 seconds{error ? ' · reconnecting…' : ''}</p>
     </div>
   )
 }
