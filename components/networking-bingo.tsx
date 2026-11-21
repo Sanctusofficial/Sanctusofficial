@@ -40,6 +40,29 @@ const PROMPTS = [
 const SIZE = 5
 const CENTER = 12
 const STORE_KEY = 'sees30-bingo-v1'
+const PLAYER_KEY = 'sees30-bingo-player-v1'
+
+type Player = { email: string; matric: string; name: string }
+
+function loadPlayer(): Player | null {
+  try {
+    const raw = localStorage.getItem(PLAYER_KEY)
+    return raw ? (JSON.parse(raw) as Player) : null
+  } catch {
+    return null
+  }
+}
+
+async function postScore(body: { email: string; matric: string; squares: number; lines: number }) {
+  const response = await fetch('/api/bingo', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  const data = await response.json().catch(() => ({}))
+  if (!response.ok) throw new Error(data.error ?? 'Could not join the leaderboard.')
+  return data as { name: string }
+}
 
 type Square = { prompt: string; who: string }
 type Card = { squares: Square[] }
@@ -86,18 +109,54 @@ export function NetworkingBingo() {
   const [open, setOpen] = useState<number | null>(null)
   const [name, setName] = useState('')
   const [warning, setWarning] = useState('')
+  const [player, setPlayer] = useState<Player | null>(null)
+  const [joinEmail, setJoinEmail] = useState('')
+  const [joinMatric, setJoinMatric] = useState('')
+  const [joinState, setJoinState] = useState<{ busy: boolean; error: string }>({ busy: false, error: '' })
+  const [syncError, setSyncError] = useState(false)
 
   useEffect(() => {
     const existing = load()
     const next = existing ?? newCard()
     if (!existing) save(next)
     setCard(next)
+    setPlayer(loadPlayer())
   }, [])
 
   const done = useMemo(() => new Set(card?.squares.flatMap((s, i) => (s.who ? [i] : [])) ?? []), [card])
   const lines = useMemo(() => LINES.filter((line) => line.every((i) => done.has(i))), [done])
   const inLine = useMemo(() => new Set(lines.flat()), [lines])
   const blackout = done.size === SIZE * SIZE
+  const met = Math.max(0, done.size - 1)
+
+  // Keep the leaderboard in step with the card (debounced so quick taps send one update).
+  useEffect(() => {
+    if (!player || !card) return
+    const timer = setTimeout(() => {
+      postScore({ email: player.email, matric: player.matric, squares: met, lines: lines.length })
+        .then(() => setSyncError(false))
+        .catch(() => setSyncError(true))
+    }, 800)
+    return () => clearTimeout(timer)
+  }, [player, card, met, lines.length])
+
+  async function join(event: React.FormEvent) {
+    event.preventDefault()
+    setJoinState({ busy: true, error: '' })
+    try {
+      const { name } = await postScore({ email: joinEmail, matric: joinMatric, squares: met, lines: lines.length })
+      const next = { email: joinEmail.trim().toLowerCase(), matric: joinMatric.replace(/\s+/g, '').toUpperCase(), name }
+      try {
+        localStorage.setItem(PLAYER_KEY, JSON.stringify(next))
+      } catch {
+        // Still joined for this visit.
+      }
+      setPlayer(next)
+      setJoinState({ busy: false, error: '' })
+    } catch (error) {
+      setJoinState({ busy: false, error: (error as Error).message })
+    }
+  }
 
   if (!card) return <div className="aspect-square w-full animate-pulse rounded-2xl bg-card" />
 
@@ -137,10 +196,36 @@ export function NetworkingBingo() {
           Find someone who matches a square, ask their name, and tap the square to add it. One person per square.
         </p>
         <p className="shrink-0 text-right">
-          <span className="block font-display text-3xl text-secondary">{done.size - 1}<span className="text-lg text-muted-foreground">/24</span></span>
+          <span className="block font-display text-3xl text-secondary">{met}<span className="text-lg text-muted-foreground">/24</span></span>
           <span className="text-xs uppercase tracking-wider text-muted-foreground">people met</span>
         </p>
       </div>
+
+      {player ? (
+        <p className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm">
+          <span>
+            On the leaderboard as <b>{player.name}</b>
+            {syncError && <span className="text-amber-500"> · offline, will retry</span>}
+          </span>
+          <a href="/play/leaderboard" className="font-semibold text-primary underline">See leaderboard →</a>
+        </p>
+      ) : (
+        <form onSubmit={join} className="space-y-3 rounded-2xl border border-primary/40 bg-card p-4">
+          <div className="flex items-baseline justify-between gap-2">
+            <p className="font-semibold">Join the live leaderboard 🏆</p>
+            <a href="/play/leaderboard" className="text-sm text-primary underline">View</a>
+          </div>
+          <p className="text-xs text-muted-foreground">Use the email and matric number you registered with. Only your first name and initial are shown.</p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <input required type="email" value={joinEmail} onChange={(e) => setJoinEmail(e.target.value)} placeholder="Email" className="w-full rounded-lg border bg-background p-3" />
+            <input required value={joinMatric} onChange={(e) => setJoinMatric(e.target.value)} placeholder="Matric number" autoCapitalize="characters" className="w-full rounded-lg border bg-background p-3 font-mono" />
+          </div>
+          {joinState.error && <p role="alert" className="text-sm text-amber-500">{joinState.error}</p>}
+          <button disabled={joinState.busy} className="w-full rounded-lg bg-primary p-3 font-semibold text-primary-foreground disabled:opacity-60">
+            {joinState.busy ? 'Joining…' : 'Join leaderboard'}
+          </button>
+        </form>
+      )}
 
       {lines.length > 0 && (
         <div role="status" className="rounded-2xl border-2 border-secondary bg-secondary/15 p-4 text-center">
