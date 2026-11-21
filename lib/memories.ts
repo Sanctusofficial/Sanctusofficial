@@ -7,6 +7,7 @@ export type EventMemory = {
   caption: string | null
   sort_order: number
   created_at: string
+  uploader_name?: string | null
   // Supabase returns FK joins under the foreign table name
   events?: { slug: string; title: string } | null
 }
@@ -15,7 +16,7 @@ export async function getMemories(slug?: string) {
   const supabase = createServiceClient()
   let query = supabase
     .from('event_memories')
-    .select('id, event_id, image_path, caption, sort_order, created_at, events(slug, title)')
+    .select('id, event_id, image_path, caption, sort_order, created_at, uploader_name, events(slug, title)')
     .eq('published', true)
     .order('sort_order')
     .order('created_at', { ascending: false })

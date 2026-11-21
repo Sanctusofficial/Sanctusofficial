@@ -60,6 +60,13 @@ export default async function AdminPage({
         Team games: award points, host the quiz, edit questions →
         <span className="mt-1 block font-sans text-sm text-muted-foreground">Volts · Amps · Tesla · Ohms. The public board is at /games.</span>
       </a>
+      <a
+        href={`/admin/memories?key=${encodeURIComponent(params.key as string)}`}
+        className="block rounded-2xl border border-secondary/40 bg-card p-5 font-display text-xl text-secondary"
+      >
+        Memories: review guest photos →
+        <span className="mt-1 block font-sans text-sm text-muted-foreground">Guests upload at /memories. Hide or delete anything that shouldn&apos;t be public.</span>
+      </a>
       <MemoryUploader adminKey={params.key as string} eventSlugs={(eventsResult.data ?? []).map((event) => event.slug)} />
       <AdminRegistrations
         initialRows={registrationsResult.data ?? []}

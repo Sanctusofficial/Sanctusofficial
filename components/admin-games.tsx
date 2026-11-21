@@ -330,7 +330,17 @@ function QuestionEditor({ adminKey }: { adminKey: string }) {
 
   return (
     <section className={card}>
-      <h2 className="font-display text-2xl text-secondary">Quiz questions ({questions.length})</h2>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="font-display text-2xl text-secondary">Quiz questions ({questions.length})</h2>
+        <button
+          type="button"
+          disabled={busy || questions.length < 2}
+          onClick={() => void run(() => api('/api/admin/quiz/questions', 'PUT', { shuffle: true }))}
+          className="rounded-lg border px-4 py-2 text-sm disabled:opacity-50"
+        >
+          🔀 Shuffle order
+        </button>
+      </div>
 
       <form id="question-form" onSubmit={save} className="mt-4 space-y-3 rounded-xl border border-dashed border-border p-4">
         <p className="font-semibold">{editing ? 'Edit question' : 'Add a question'}</p>

@@ -55,6 +55,21 @@ export async function PUT(request: Request) {
     const body = await request.json()
     const db = createServiceClient()
     const id = String(body.id ?? '')
+    if (body.shuffle === true) {
+      // Only before the quiz starts (or after it ends), so a live game never repeats or skips a question.
+      const { data: session } = await db.from('quiz_session').select('status').eq('id', 1).single()
+      if (session?.status === 'question' || session?.status === 'reveal') {
+        return NextResponse.json({ error: 'Shuffle before starting the quiz (or after it ends).' }, { status: 409 })
+      }
+      const { data: all } = await db.from('quiz_questions').select('id')
+      const list = [...(all ?? [])]
+      for (let i = list.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        ;[list[i], list[j]] = [list[j], list[i]]
+      }
+      await Promise.all(list.map((q, index) => db.from('quiz_questions').update({ position: index + 1 }).eq('id', q.id)))
+      return NextResponse.json({ success: true })
+    }
     if (body.move === -1 || body.move === 1) {
       const { data: all } = await db.from('quiz_questions').select('id, position').order('position').order('created_at')
       const list = all ?? []
