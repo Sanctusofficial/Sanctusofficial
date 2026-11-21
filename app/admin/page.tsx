@@ -53,6 +53,13 @@ export default async function AdminPage({
         Open door check-in scanner →
         <span className="mt-1 block font-sans text-sm text-muted-foreground">Open this on each door phone. Scans verify instantly.</span>
       </a>
+      <a
+        href={`/admin/games?key=${encodeURIComponent(params.key as string)}`}
+        className="block rounded-2xl border border-primary/40 bg-card p-5 font-display text-xl text-primary"
+      >
+        Team games: award points, host the quiz, edit questions →
+        <span className="mt-1 block font-sans text-sm text-muted-foreground">Volts · Amps · Tesla · Ohms. The public board is at /games.</span>
+      </a>
       <MemoryUploader adminKey={params.key as string} eventSlugs={(eventsResult.data ?? []).map((event) => event.slug)} />
       <AdminRegistrations
         initialRows={registrationsResult.data ?? []}

@@ -8,6 +8,7 @@ const LINKS = [
   { href: '/status', label: 'Status' },
   { href: '/account', label: 'Passport' },
   { href: '/memories', label: 'Memories' },
+  { href: '/games', label: 'Games' },
   { href: '/play', label: 'Bingo' },
 ]
 
@@ -25,7 +26,7 @@ export function SiteHeader() {
         >
           {SITE.name}
         </Link>
-        <ul className="flex items-center gap-1 text-sm sm:gap-2">
+        <ul className="-mr-2 flex min-w-0 items-center gap-1 overflow-x-auto whitespace-nowrap text-sm [scrollbar-width:none] sm:gap-2">
           {LINKS.map((l) => (
             <li key={l.href}>
               <Link
