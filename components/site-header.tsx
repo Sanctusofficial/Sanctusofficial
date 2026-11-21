@@ -8,7 +8,7 @@ const LINKS = [
   { href: '/status', label: 'Status' },
   { href: '/account', label: 'Passport' },
   { href: '/memories', label: 'Memories' },
-  { href: '/play', label: 'Play' },
+  { href: '/play', label: 'Bingo' },
 ]
 
 export function SiteHeader() {

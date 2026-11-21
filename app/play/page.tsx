@@ -1,17 +1,26 @@
-import { CircuitQuiz } from '@/components/circuit-quiz'
-import { SecretTerminal } from '@/components/secret-terminal'
+import type { Metadata } from 'next'
+
+import { NetworkingBingo } from '@/components/networking-bingo'
+import { SiteHeader } from '@/components/site-header'
+
+export const metadata: Metadata = {
+  title: "Networking Bingo · SEES '30",
+  description: 'Meet people at the SEES ’30 Mixer, fill your bingo card and claim a prize.',
+}
 
 export default function PlayPage() {
   return (
-    <main className="min-h-screen px-4 py-12">
-      <section className="mx-auto grid max-w-3xl gap-8">
-        <div>
-          <p className="font-display text-sm uppercase tracking-[0.3em] text-secondary">SEES&apos;30 playground</p>
-          <h1 className="mt-3 font-display text-4xl text-primary text-glow-pink">Play with the circuit</h1>
-        </div>
-        <CircuitQuiz />
-        <SecretTerminal />
-      </section>
-    </main>
+    <>
+      <SiteHeader />
+      <main className="min-h-screen px-3 py-8 sm:px-4 sm:py-12">
+        <section className="mx-auto max-w-xl space-y-6">
+          <div>
+            <p className="font-display text-sm uppercase tracking-[0.3em] text-secondary">SEES&apos;30 Mixer</p>
+            <h1 className="mt-3 font-display text-4xl text-primary text-glow-pink">Networking Bingo</h1>
+          </div>
+          <NetworkingBingo />
+        </section>
+      </main>
+    </>
   )
 }
